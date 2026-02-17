@@ -8,10 +8,10 @@ const fs = require('fs');
 const path = require('path');
 const { Client, Collection, GatewayIntentBits } = require('discord.js');
 
-// Use only the Guilds intent for slash-command based bots.
-// Remove privileged intents (GuildMembers, MessageContent) unless enabled in the
-// Discord Developer Portal for your application.
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+// Include message-related intents so the bot can read message content.
+// Note: `MessageContent` is a privileged intent and must be enabled in the
+// Discord Developer Portal for your application if required.
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
 client.commands = new Collection();
 const commandsPath = path.join(__dirname, 'commands');
@@ -67,6 +67,17 @@ client.on('interactionCreate', async interaction => {
 		} else {
 			await interaction.reply({ content: 'There was an error executing that command.', ephemeral: true });
 		}
+	}
+});
+
+// Listen for regular messages and respond when someone mentions "Tito"
+// Case-insensitive check; ignores bot messages.
+client.on('messageCreate', message => {
+	if (message.author?.bot) return;
+	const content = message.content;
+	if (!content) return;
+	if (content.toLowerCase().includes('tito')) {
+		message.channel.send('SHUT UP <@139835342718107648>.').catch(console.error);
 	}
 });
 
