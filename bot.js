@@ -51,7 +51,7 @@ client.once('ready', _handleReady);
 client.once('clientReady', _handleReady);
 
 cron.schedule('*/15 * * * 1-5', async () => {
-    const channelId = process.env.CHANNEL_ID;
+    const channelId = process.env.WTI_CHANNEL_ID;
     if (!channelId) return;
     try {
         const quote = await yahooFinance.quote('CL=F');
