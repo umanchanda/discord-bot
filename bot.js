@@ -8,8 +8,9 @@ const fs = require('fs');
 const path = require('path');
 const { Client, Collection, GatewayIntentBits } = require('discord.js');
 const cron = require('node-cron');
-const YahooFinance = require('yahoo-finance2').default;
-const yahooFinance = new YahooFinance();
+const { fetchBtcMessage } = require('./commands/btc');
+const { fetchWtiMessage } = require('./commands/wti');
+const { fetchTqqqMessage } = require('./commands/tqqq');
 
 // Include message-related intents so the bot can read message content.
 // Note: `MessageContent` is a privileged intent and must be enabled in the
@@ -54,14 +55,10 @@ cron.schedule('*/15 * * * 1-5', async () => {
     const channelId = process.env.WTI_CHANNEL_ID;
     if (!channelId) return;
     try {
-        const quote = await yahooFinance.quote('CL=F');
-        if (!quote || quote.regularMarketPrice == null) return;
-        const price = quote.regularMarketPrice.toFixed(2);
-        const change = quote.regularMarketChange.toFixed(2);
-        const changePct = quote.regularMarketChangePercent.toFixed(2);
-        const sign = change >= 0 ? '+' : '';
+        const msg = await fetchWtiMessage();
+        if (!msg) return;
         const channel = await client.channels.fetch(channelId);
-        await channel.send(`<@${uman230}> WTI Crude Oil (CL=F): **$${price}/barrel** (${sign}${change}, ${sign}${changePct}%)`);
+        await channel.send(`<@${uman230}> ${msg}`);
     } catch (err) {
         console.error('Hourly WTI cron error:', err);
     }
@@ -71,14 +68,10 @@ cron.schedule('30-55/5 8 * * 1-5', async () => {
     const channelId = process.env.TQQQ_CHANNEL_ID;
     if (!channelId) return;
     try {
-        const quote = await yahooFinance.quote('TQQQ');
-        if (!quote || quote.regularMarketPrice == null) return;
-        const price = quote.regularMarketPrice.toFixed(2);
-        const change = quote.regularMarketChange.toFixed(2);
-        const changePct = quote.regularMarketChangePercent.toFixed(2);
-        const sign = change >= 0 ? '+' : '';
+        const msg = await fetchTqqqMessage();
+        if (!msg) return;
         const channel = await client.channels.fetch(channelId);
-        await channel.send(`<@${uman230}> TQQQ: **$${price}** (${sign}${change}, ${sign}${changePct}%)`);
+        await channel.send(`<@${uman230}> ${msg}`);
     } catch (err) {
         console.error('TQQQ cron error:', err);
     }
@@ -88,14 +81,10 @@ cron.schedule('*/15 9-15 * * 1-5', async () => {
     const channelId = process.env.TQQQ_CHANNEL_ID;
     if (!channelId) return;
     try {
-        const quote = await yahooFinance.quote('TQQQ');
-        if (!quote || quote.regularMarketPrice == null) return;
-        const price = quote.regularMarketPrice.toFixed(2);
-        const change = quote.regularMarketChange.toFixed(2);
-        const changePct = quote.regularMarketChangePercent.toFixed(2);
-        const sign = change >= 0 ? '+' : '';
+        const msg = await fetchTqqqMessage();
+        if (!msg) return;
         const channel = await client.channels.fetch(channelId);
-        await channel.send(`<@${uman230}> TQQQ: **$${price}** (${sign}${change}, ${sign}${changePct}%)`);
+        await channel.send(`<@${uman230}> ${msg}`);
     } catch (err) {
         console.error('TQQQ cron error:', err);
     }
@@ -105,14 +94,10 @@ cron.schedule('55,10,25,40 * * * *', async () => {
     const channelId = process.env.BTC_CHANNEL_ID;
     if (!channelId) return;
     try {
-        const quote = await yahooFinance.quote('BTC-USD');
-        if (!quote || quote.regularMarketPrice == null) return;
-        const price = quote.regularMarketPrice.toFixed(2);
-        const change = quote.regularMarketChange.toFixed(2);
-        const changePct = quote.regularMarketChangePercent.toFixed(2);
-        const sign = change >= 0 ? '+' : '';
+        const msg = await fetchBtcMessage();
+        if (!msg) return;
         const channel = await client.channels.fetch(channelId);
-        await channel.send(`<@${uman230}> Bitcoin (BTC-USD): **$${price}** (${sign}${change}, ${sign}${changePct}%)`);
+        await channel.send(`<@${uman230}> ${msg}`);
     } catch (err) {
         console.error('BTC cron error:', err);
     }
