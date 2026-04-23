@@ -7,6 +7,9 @@ require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const { Client, Collection, GatewayIntentBits } = require('discord.js');
+const cron = require('node-cron');
+const YahooFinance = require('yahoo-finance2').default;
+const yahooFinance = new YahooFinance();
 
 // Include message-related intents so the bot can read message content.
 // Note: `MessageContent` is a privileged intent and must be enabled in the
@@ -44,6 +47,23 @@ const _handleReady = () => {
 };
 client.once('ready', _handleReady);
 client.once('clientReady', _handleReady);
+
+cron.schedule('0 * * * *', async () => {
+    const channelId = process.env.CHANNEL_ID;
+    if (!channelId) return;
+    try {
+        const quote = await yahooFinance.quote('CL=F');
+        if (!quote || quote.regularMarketPrice == null) return;
+        const price = quote.regularMarketPrice.toFixed(2);
+        const change = quote.regularMarketChange.toFixed(2);
+        const changePct = quote.regularMarketChangePercent.toFixed(2);
+        const sign = change >= 0 ? '+' : '';
+        const channel = await client.channels.fetch(channelId);
+        await channel.send(`WTI Crude Oil (CL=F): **$${price}/barrel** (${sign}${change}, ${sign}${changePct}%)`);
+    } catch (err) {
+        console.error('Hourly WTI cron error:', err);
+    }
+});
 
 client.on('interactionCreate', async interaction => {
 	if (!interaction.isChatInputCommand()) return;
