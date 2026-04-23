@@ -64,11 +64,11 @@ const sendWtiUpdate = async () => {
     }
 };
 
-// WTI (CME Globex) trading hours: Sun 6 PM – Fri 5 PM ET, with a 5–6 PM ET daily break
-// Mon–Fri midnight to 4:59 PM ET
-cron.schedule('*/15 0-16 * * 1-5', sendWtiUpdate, { timezone: 'America/New_York' });
-// Sun–Thu 6 PM to 11:59 PM ET (Sunday open + daily reopen after maintenance)
-cron.schedule('*/15 18-23 * * 0-4', sendWtiUpdate, { timezone: 'America/New_York' });
+// WTI (CME Globex) trading hours: Sun 5 PM – Fri 4 PM CST, with a 4–5 PM CST daily break
+// Mon–Fri midnight to 3:59 PM CST
+cron.schedule('*/15 0-15 * * 1-5', sendWtiUpdate);
+// Sun–Thu 5 PM to 11:59 PM CST (Sunday open + daily reopen after maintenance)
+cron.schedule('*/15 17-23 * * 0-4', sendWtiUpdate);
 
 cron.schedule('30-55/5 8 * * 1-5', async () => {
     const channelId = process.env.TQQQ_CHANNEL_ID;
