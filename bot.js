@@ -65,6 +65,40 @@ cron.schedule('0 * * * *', async () => {
     }
 });
 
+cron.schedule('30-55/5 8 * * 1-5', async () => {
+    const channelId = process.env.TQQQ_CHANNEL_ID;
+    if (!channelId) return;
+    try {
+        const quote = await yahooFinance.quote('TQQQ');
+        if (!quote || quote.regularMarketPrice == null) return;
+        const price = quote.regularMarketPrice.toFixed(2);
+        const change = quote.regularMarketChange.toFixed(2);
+        const changePct = quote.regularMarketChangePercent.toFixed(2);
+        const sign = change >= 0 ? '+' : '';
+        const channel = await client.channels.fetch(channelId);
+        await channel.send(`TQQQ: **$${price}** (${sign}${change}, ${sign}${changePct}%)`);
+    } catch (err) {
+        console.error('TQQQ cron error:', err);
+    }
+});
+
+cron.schedule('*/15 9-15 * * 1-5', async () => {
+    const channelId = process.env.TQQQ_CHANNEL_ID;
+    if (!channelId) return;
+    try {
+        const quote = await yahooFinance.quote('TQQQ');
+        if (!quote || quote.regularMarketPrice == null) return;
+        const price = quote.regularMarketPrice.toFixed(2);
+        const change = quote.regularMarketChange.toFixed(2);
+        const changePct = quote.regularMarketChangePercent.toFixed(2);
+        const sign = change >= 0 ? '+' : '';
+        const channel = await client.channels.fetch(channelId);
+        await channel.send(`TQQQ: **$${price}** (${sign}${change}, ${sign}${changePct}%)`);
+    } catch (err) {
+        console.error('TQQQ cron error:', err);
+    }
+});
+
 client.on('interactionCreate', async interaction => {
 	if (!interaction.isChatInputCommand()) return;
 	console.log(`Interaction received: ${interaction.commandName} from ${interaction.user.tag}`);

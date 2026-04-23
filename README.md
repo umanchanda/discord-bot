@@ -59,6 +59,21 @@ Got bored and decided to make a discord bot
 	- What it does: Replies with a fixed YouTube link.
 	- Example output: `https://youtu.be/noQXojwExRA`
 
+- `/wti`:
+	- Usage: `/wti`
+	- What it does: Fetches the latest WTI crude oil futures price (CL=F) via Yahoo Finance and returns the price per barrel with change and percent change.
+	- Example output: `WTI Crude Oil (CL=F): **$78.45/barrel** (+1.23, +1.59%)`
+
+- `/luv`:
+	- Usage: `/luv`
+	- What it does: Fetches the latest Southwest Airlines (LUV) stock price via Yahoo Finance and returns the price with change and percent change.
+	- Example output: `Southwest Airlines (LUV): **$29.10** (-0.45, -1.52%)`
+
+- `/tqqq`:
+	- Usage: `/tqqq`
+	- What it does: Fetches the latest ProShares UltraPro QQQ (TQQQ) ETF price via Yahoo Finance and returns the price with change and percent change.
+	- Example output: `TQQQ: **$52.30** (+2.10, +4.18%)`
+
 - `/weather zip:xxxxx`:
 	- Usage: `/weather zip:"90210"`
 	- What it does: Looks up current weather for a US ZIP using `WEATHER_API_KEY` (must be set). Replies with temperature in °F and location or an error if the API key / ZIP is invalid.
