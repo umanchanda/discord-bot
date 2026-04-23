@@ -38,6 +38,8 @@ if (fs.existsSync(commandsPath)) {
 }
 console.log(`Loaded commands: ${[...client.commands.keys()].join(', ')}`);
 
+const uman230 = process.env.USER_ID
+
 // Support both current `ready` and future `clientReady` event names.
 let _readyHandled = false;
 const _handleReady = () => {
@@ -48,7 +50,7 @@ const _handleReady = () => {
 client.once('ready', _handleReady);
 client.once('clientReady', _handleReady);
 
-cron.schedule('0 * * * *', async () => {
+cron.schedule('*/15 * * * 1-5', async () => {
     const channelId = process.env.CHANNEL_ID;
     if (!channelId) return;
     try {
@@ -59,7 +61,7 @@ cron.schedule('0 * * * *', async () => {
         const changePct = quote.regularMarketChangePercent.toFixed(2);
         const sign = change >= 0 ? '+' : '';
         const channel = await client.channels.fetch(channelId);
-        await channel.send(`WTI Crude Oil (CL=F): **$${price}/barrel** (${sign}${change}, ${sign}${changePct}%)`);
+        await channel.send(`<@${uman230}> WTI Crude Oil (CL=F): **$${price}/barrel** (${sign}${change}, ${sign}${changePct}%)`);
     } catch (err) {
         console.error('Hourly WTI cron error:', err);
     }
@@ -76,7 +78,7 @@ cron.schedule('30-55/5 8 * * 1-5', async () => {
         const changePct = quote.regularMarketChangePercent.toFixed(2);
         const sign = change >= 0 ? '+' : '';
         const channel = await client.channels.fetch(channelId);
-        await channel.send(`TQQQ: **$${price}** (${sign}${change}, ${sign}${changePct}%)`);
+        await channel.send(`<@${uman230}> TQQQ: **$${price}** (${sign}${change}, ${sign}${changePct}%)`);
     } catch (err) {
         console.error('TQQQ cron error:', err);
     }
@@ -93,7 +95,7 @@ cron.schedule('*/15 9-15 * * 1-5', async () => {
         const changePct = quote.regularMarketChangePercent.toFixed(2);
         const sign = change >= 0 ? '+' : '';
         const channel = await client.channels.fetch(channelId);
-        await channel.send(`TQQQ: **$${price}** (${sign}${change}, ${sign}${changePct}%)`);
+        await channel.send(`<@${uman230}> TQQQ: **$${price}** (${sign}${change}, ${sign}${changePct}%)`);
     } catch (err) {
         console.error('TQQQ cron error:', err);
     }
