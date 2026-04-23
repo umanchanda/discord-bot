@@ -101,6 +101,23 @@ cron.schedule('*/15 9-15 * * 1-5', async () => {
     }
 });
 
+cron.schedule('55,10,25,40 * * * *', async () => {
+    const channelId = process.env.BTC_CHANNEL_ID;
+    if (!channelId) return;
+    try {
+        const quote = await yahooFinance.quote('BTC-USD');
+        if (!quote || quote.regularMarketPrice == null) return;
+        const price = quote.regularMarketPrice.toFixed(2);
+        const change = quote.regularMarketChange.toFixed(2);
+        const changePct = quote.regularMarketChangePercent.toFixed(2);
+        const sign = change >= 0 ? '+' : '';
+        const channel = await client.channels.fetch(channelId);
+        await channel.send(`<@${uman230}> Bitcoin (BTC-USD): **$${price}** (${sign}${change}, ${sign}${changePct}%)`);
+    } catch (err) {
+        console.error('BTC cron error:', err);
+    }
+});
+
 client.on('interactionCreate', async interaction => {
 	if (!interaction.isChatInputCommand()) return;
 	console.log(`Interaction received: ${interaction.commandName} from ${interaction.user.tag}`);
