@@ -13,7 +13,7 @@ module.exports = {
             if (!quote || quote.regularMarketPrice == null) {
                 return interaction.editReply('No Bitcoin price data available right now.');
             }
-            const price = quote.regularMarketPrice.toFixed(2);
+            const price = quote.regularMarketPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             const change = quote.regularMarketChange.toFixed(2);
             const changePct = quote.regularMarketChangePercent.toFixed(2);
             const sign = change >= 0 ? '+' : '';
