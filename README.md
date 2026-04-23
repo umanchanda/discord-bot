@@ -100,3 +100,8 @@ Notes
 
 - Keep your bot token private. Do not commit `.env`.
 - If you need legacy message-based commands, we can add a message handler as well.
+
+## Heroku Commands
+
+1. Restart: `heroku restart --app umanchanda-discord-bot`
+2. Add env var: `heroku config:set ENV_VAR=<your-value> --app umanchanda-discord-bot`
