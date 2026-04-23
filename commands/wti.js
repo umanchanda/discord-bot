@@ -1,5 +1,6 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
-const yahooFinance = require('yahoo-finance2').default;
+const { YahooFinance } = require('yahoo-finance2');
+const yahooFinance = new YahooFinance();
 
 module.exports = {
     data: new SlashCommandBuilder()
