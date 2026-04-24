@@ -17,7 +17,9 @@ module.exports = {
         const year = interaction.options.getInteger('year');
         const month = interaction.options.getInteger('month');
         const day = interaction.options.getInteger('day');
-        const url = `https://uman230-nba-api-2a9531748263.herokuapp.com/scores/${year}/${month}/${day}`;
+        const mm = String(month).padStart(2, '0');
+        const dd = String(day).padStart(2, '0');
+        const url = `https://uman230-nba-api-2a9531748263.herokuapp.com/scores/${year}/${mm}/${dd}`;
         await interaction.reply(url);
     }
 };
