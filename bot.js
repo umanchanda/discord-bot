@@ -66,9 +66,9 @@ const sendWtiUpdate = async () => {
 
 // WTI (CME Globex) trading hours: Sun 5 PM – Fri 4 PM CST, with a 4–5 PM CST daily break
 // Mon–Fri midnight to 3:59 PM CST
-cron.schedule('*/15 0-15 * * 1-5', sendWtiUpdate);
+cron.schedule('* 0-15 * * 1-5', sendWtiUpdate);
 // Sun–Thu 5 PM to 11:59 PM CST (Sunday open + daily reopen after maintenance)
-cron.schedule('*/15 17-23 * * 0-4', sendWtiUpdate);
+cron.schedule('* 17-23 * * 0-4', sendWtiUpdate);
 
 cron.schedule('30-55/5 8 * * 1-5', async () => {
     const channelId = process.env.TQQQ_CHANNEL_ID;
