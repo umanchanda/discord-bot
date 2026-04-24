@@ -58,7 +58,7 @@ const sendWtiUpdate = async () => {
         const msg = await fetchWtiMessage();
         if (!msg) return;
         const channel = await client.channels.fetch(channelId);
-        await channel.send(`<@${uman230}> ${msg}`);
+        await channel.send(`${msg}`);
     } catch (err) {
         console.error('WTI cron error:', err);
     }
@@ -77,7 +77,7 @@ cron.schedule('30-55/5 8 * * 1-5', async () => {
         const msg = await fetchTqqqMessage();
         if (!msg) return;
         const channel = await client.channels.fetch(channelId);
-        await channel.send(`<@${uman230}> ${msg}`);
+        await channel.send(`${msg}`);
     } catch (err) {
         console.error('TQQQ cron error:', err);
     }
@@ -90,7 +90,7 @@ cron.schedule('*/15 9-15 * * 1-5', async () => {
         const msg = await fetchTqqqMessage();
         if (!msg) return;
         const channel = await client.channels.fetch(channelId);
-        await channel.send(`<@${uman230}> ${msg}`);
+        await channel.send(`${msg}`);
     } catch (err) {
         console.error('TQQQ cron error:', err);
     }
@@ -103,7 +103,7 @@ cron.schedule('55,10,25,40 * * * *', async () => {
         const msg = await fetchBtcMessage();
         if (!msg) return;
         const channel = await client.channels.fetch(channelId);
-        await channel.send(`<@${uman230}> ${msg} https://kalshi.com/markets/kxbtc15m/bitcoin-price-up-down?utm_source=kalshiweb_eventpage`);
+        await channel.send(`${msg} https://kalshi.com/markets/kxbtc15m/bitcoin-price-up-down?utm_source=kalshiweb_eventpage`);
     } catch (err) {
         console.error('BTC cron error:', err);
     }
