@@ -7,16 +7,8 @@ require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const { Client, Collection, GatewayIntentBits } = require('discord.js');
-const cron = require('node-cron');
-const { fetchBtcMessage } = require('./commands/btc');
-const { fetchWtiMessage } = require('./commands/wti');
-const { fetchTqqqMessage } = require('./commands/tqqq');
-const { fetchSp500Message } = require('./commands/sp500');
-const { fetchNasdaqMessage } = require('./commands/nasdaq');
+const { registerCrons } = require('./crons');
 
-// Include message-related intents so the bot can read message content.
-// Note: `MessageContent` is a privileged intent and must be enabled in the
-// Discord Developer Portal for your application if required.
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
 client.commands = new Collection();
@@ -25,7 +17,6 @@ if (fs.existsSync(commandsPath)) {
 	const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 	for (const file of commandFiles) {
 		const command = require(`./commands/${file}`);
-		// Some command modules expose a SlashCommandBuilder; ensure we get the command name reliably
 		let name = undefined;
 		try {
 			name = command.data && (command.data.name || command.data.toJSON && command.data.toJSON().name);
@@ -41,9 +32,8 @@ if (fs.existsSync(commandsPath)) {
 }
 console.log(`Loaded commands: ${[...client.commands.keys()].join(', ')}`);
 
-const uman230 = process.env.USER_ID
+const uman230 = process.env.USER_ID;
 
-// Support both current `ready` and future `clientReady` event names.
 let _readyHandled = false;
 const _handleReady = () => {
 	if (_readyHandled) return;
@@ -53,112 +43,13 @@ const _handleReady = () => {
 client.once('ready', _handleReady);
 client.once('clientReady', _handleReady);
 
-const sendWtiUpdate = async () => {
-    const channelId = process.env.WTI_CHANNEL_ID;
-    if (!channelId) return;
-    try {
-        const msg = await fetchWtiMessage();
-        if (!msg) return;
-        const channel = await client.channels.fetch(channelId);
-        await channel.send(`${msg}`);
-    } catch (err) {
-        console.error('WTI cron error:', err);
-    }
-};
-
-// WTI (CME Globex) trading hours: Sun 5 PM – Fri 4 PM CST, with a 4–5 PM CST daily break
-// Mon–Fri midnight to 3:59 PM CST
-cron.schedule('0 0,6,12 * * 1-5', sendWtiUpdate);
-// Sun–Thu 5 PM to 11:59 PM CST (Sunday open + daily reopen after maintenance)
-cron.schedule('0 17,23 * * 0-4', sendWtiUpdate);
-
-cron.schedule('30-55/5 8 * * 1-5', async () => {
-    const channelId = process.env.TQQQ_CHANNEL_ID;
-    if (!channelId) return;
-    try {
-        const msg = await fetchTqqqMessage();
-        if (!msg) return;
-        const channel = await client.channels.fetch(channelId);
-        await channel.send(`${msg}`);
-    } catch (err) {
-        console.error('TQQQ cron error:', err);
-    }
-});
-
-cron.schedule('*/15 9-14 * * 1-5', async () => {
-    const channelId = process.env.TQQQ_CHANNEL_ID;
-    if (!channelId) return;
-    try {
-        const msg = await fetchTqqqMessage();
-        if (!msg) return;
-        const channel = await client.channels.fetch(channelId);
-        await channel.send(`${msg}`);
-    } catch (err) {
-        console.error('TQQQ cron error:', err);
-    }
-});
-
-cron.schedule('10,25,40 * * * *', async () => {
-    const channelId = process.env.BTC_CHANNEL_ID;
-    if (!channelId) return;
-    try {
-        const msg = await fetchBtcMessage();
-        if (!msg) return;
-        const channel = await client.channels.fetch(channelId);
-        await channel.send(`${msg} https://kalshi.com/markets/kxbtc15m/bitcoin-price-up-down?utm_source=kalshiweb_eventpage`);
-    } catch (err) {
-        console.error('BTC cron error:', err);
-    }
-});
-
-// :55 every hour, every day — ping user with BTC price
-cron.schedule('55 * * * *', async () => {
-    const channelId = process.env.BTC_CHANNEL_ID;
-    if (!channelId) return;
-    try {
-        const msg = await fetchBtcMessage();
-        if (!msg) return;
-        const channel = await client.channels.fetch(channelId);
-        await channel.send(`<@${uman230}> ${msg} https://kalshi.com/markets/kxbtcd/bitcoin-price-abovebelow?utm_source=kalshiweb_eventpage`);
-    } catch (err) {
-        console.error('BTC ping cron error:', err);
-    }
-});
-
-// 2:45 PM CST, Mon–Fri — ping user with S&P 500 price near market close
-cron.schedule('45 14 * * 1-5', async () => {
-    const channelId = process.env.SP500_CHANNEL_ID;
-    if (!channelId) return;
-    try {
-        const msg = await fetchSp500Message();
-        if (!msg) return;
-        const channel = await client.channels.fetch(channelId);
-        await channel.send(`<@${uman230}> ${msg}`);
-    } catch (err) {
-        console.error('SP500 cron error:', err);
-    }
-});
-
-// 2:45 PM CST, Mon–Fri — ping user with NASDAQ price near market close
-cron.schedule('45 14 * * 1-5', async () => {
-    const channelId = process.env.NASDAQ_CHANNEL_ID;
-    if (!channelId) return;
-    try {
-        const msg = await fetchNasdaqMessage();
-        if (!msg) return;
-        const channel = await client.channels.fetch(channelId);
-        await channel.send(`<@${uman230}> ${msg}`);
-    } catch (err) {
-        console.error('NASDAQ cron error:', err);
-    }
-});
+registerCrons(client, uman230);
 
 client.on('interactionCreate', async interaction => {
 	if (!interaction.isChatInputCommand()) return;
 	console.log(`Interaction received: ${interaction.commandName} from ${interaction.user.tag}`);
 	const command = client.commands.get(interaction.commandName);
 	if (!command) {
-		// Reply immediately so Discord doesn't show "The application did not respond"
 		try {
 			await interaction.reply({ content: 'Command not available on this bot instance.', ephemeral: true });
 		} catch (err) {
@@ -179,7 +70,6 @@ client.on('interactionCreate', async interaction => {
 });
 
 // Listen for regular messages and respond when someone mentions "Tito"
-// Case-insensitive check; ignores bot messages.
 client.on('messageCreate', message => {
 	if (message.author?.bot) return;
 	const content = message.content;
