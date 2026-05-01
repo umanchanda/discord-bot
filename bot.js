@@ -98,7 +98,7 @@ cron.schedule('*/15 9-14 * * 1-5', async () => {
     }
 });
 
-cron.schedule('55,10,25,40 * * * *', async () => {
+cron.schedule('10,25,40 * * * *', async () => {
     const channelId = process.env.BTC_CHANNEL_ID;
     if (!channelId) return;
     try {
