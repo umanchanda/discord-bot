@@ -11,6 +11,7 @@ const cron = require('node-cron');
 const { fetchBtcMessage } = require('./commands/btc');
 const { fetchWtiMessage } = require('./commands/wti');
 const { fetchTqqqMessage } = require('./commands/tqqq');
+const { fetchSp500Message } = require('./commands/sp500');
 
 // Include message-related intents so the bot can read message content.
 // Note: `MessageContent` is a privileged intent and must be enabled in the
@@ -106,6 +107,20 @@ cron.schedule('55,10,25,40 * * * *', async () => {
         await channel.send(`${msg} https://kalshi.com/markets/kxbtc15m/bitcoin-price-up-down?utm_source=kalshiweb_eventpage`);
     } catch (err) {
         console.error('BTC cron error:', err);
+    }
+});
+
+// 2:45 PM CST, Mon–Fri — ping user with S&P 500 price near market close
+cron.schedule('45 14 * * 1-5', async () => {
+    const channelId = process.env.SP500_CHANNEL_ID;
+    if (!channelId) return;
+    try {
+        const msg = await fetchSp500Message();
+        if (!msg) return;
+        const channel = await client.channels.fetch(channelId);
+        await channel.send(`<@${uman230}> ${msg}`);
+    } catch (err) {
+        console.error('SP500 cron error:', err);
     }
 });
 
