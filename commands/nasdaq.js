@@ -1,0 +1,31 @@
+const { SlashCommandBuilder } = require('@discordjs/builders');
+const YahooFinance = require('yahoo-finance2').default;
+const yahooFinance = new YahooFinance();
+
+async function fetchNasdaqMessage() {
+    const quote = await yahooFinance.quote('^IXIC');
+    if (!quote || quote.regularMarketPrice == null) return null;
+    const price = quote.regularMarketPrice.toFixed(2);
+    const change = quote.regularMarketChange.toFixed(2);
+    const changePct = quote.regularMarketChangePercent.toFixed(2);
+    const sign = change >= 0 ? '+' : '';
+    return `NASDAQ: **${price}** (${sign}${change}, ${sign}${changePct}%)`;
+}
+
+module.exports = {
+    data: new SlashCommandBuilder()
+        .setName('nasdaq')
+        .setDescription('Get the latest NASDAQ Composite price'),
+    fetchNasdaqMessage,
+    async execute(interaction) {
+        await interaction.deferReply();
+        try {
+            const msg = await fetchNasdaqMessage();
+            if (!msg) return interaction.editReply('No NASDAQ price data available right now.');
+            return interaction.editReply(msg);
+        } catch (err) {
+            console.error('NASDAQ command error:', err);
+            try { await interaction.editReply('Failed to fetch NASDAQ price.'); } catch (e) {}
+        }
+    },
+};
