@@ -83,7 +83,7 @@ cron.schedule('30-55/5 8 * * 1-5', async () => {
     }
 });
 
-cron.schedule('*/15 9-15 * * 1-5', async () => {
+cron.schedule('*/15 9-14 * * 1-5', async () => {
     const channelId = process.env.TQQQ_CHANNEL_ID;
     if (!channelId) return;
     try {
