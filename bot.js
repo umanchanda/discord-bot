@@ -111,6 +111,20 @@ cron.schedule('55,10,25,40 * * * *', async () => {
     }
 });
 
+// :55 every hour, every day — ping user with BTC price
+cron.schedule('55 * * * *', async () => {
+    const channelId = process.env.BTC_CHANNEL_ID;
+    if (!channelId) return;
+    try {
+        const msg = await fetchBtcMessage();
+        if (!msg) return;
+        const channel = await client.channels.fetch(channelId);
+        await channel.send(`<@${uman230}> ${msg}`);
+    } catch (err) {
+        console.error('BTC ping cron error:', err);
+    }
+});
+
 // 2:45 PM CST, Mon–Fri — ping user with S&P 500 price near market close
 cron.schedule('45 14 * * 1-5', async () => {
     const channelId = process.env.SP500_CHANNEL_ID;
