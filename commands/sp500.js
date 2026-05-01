@@ -5,8 +5,8 @@ const yahooFinance = new YahooFinance();
 async function fetchSp500Message() {
     const quote = await yahooFinance.quote('^GSPC');
     if (!quote || quote.regularMarketPrice == null) return null;
-    const price = quote.regularMarketPrice.toFixed(2);
-    const change = quote.regularMarketChange.toFixed(2);
+    const price = quote.regularMarketPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const change = quote.regularMarketChange.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const changePct = quote.regularMarketChangePercent.toFixed(2);
     const sign = change >= 0 ? '+' : '';
     return `S&P 500: **${price}** (${sign}${change}, ${sign}${changePct}%)`;
