@@ -119,7 +119,7 @@ cron.schedule('55 * * * *', async () => {
         const msg = await fetchBtcMessage();
         if (!msg) return;
         const channel = await client.channels.fetch(channelId);
-        await channel.send(`<@${uman230}> ${msg}`);
+        await channel.send(`<@${uman230}> ${msg} https://kalshi.com/markets/kxbtcd/bitcoin-price-abovebelow?utm_source=kalshiweb_eventpage`);
     } catch (err) {
         console.error('BTC ping cron error:', err);
     }
