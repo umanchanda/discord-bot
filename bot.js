@@ -70,14 +70,14 @@ client.on('interactionCreate', async interaction => {
 });
 
 // Listen for regular messages and respond when someone mentions "Tito"
-client.on('messageCreate', message => {
-	if (message.author?.bot) return;
-	const content = message.content;
-	if (!content) return;
-	if (content.toLowerCase().includes('tito')) {
-		message.channel.send('SHUT UP <@139835342718107648>.').catch(console.error);
-	}
-});
+// client.on('messageCreate', message => {
+// 	if (message.author?.bot) return;
+// 	const content = message.content;
+// 	if (!content) return;
+// 	if (content.toLowerCase().includes('tito')) {
+// 		message.channel.send('SHUT UP <@139835342718107648>.').catch(console.error);
+// 	}
+// });
 
 const token = process.env.TOKEN;
 if (!token) {
