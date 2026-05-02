@@ -4,6 +4,7 @@ const { fetchWtiMessage } = require('./commands/wti');
 const { fetchTqqqMessage } = require('./commands/tqqq');
 const { fetchSp500Message } = require('./commands/sp500');
 const { fetchNasdaqMessage } = require('./commands/nasdaq');
+const { fetchBrentMessage } = require('./commands/brent');
 
 function registerCrons(client, userId) {
     const send = async (channelId, content) => {
@@ -77,6 +78,16 @@ function registerCrons(client, userId) {
             const msg = await fetchSp500Message();
             if (msg) await send(channelId, `<@${userId}> ${msg}`);
         } catch (err) { console.error('SP500 cron error:', err); }
+    });
+
+    // Brent — ping user at 4:55pm M–F
+    cron.schedule('55 16 * * 1-5', async () => {
+        const channelId = process.env.BRENT_CHANNEL_ID;
+        if (!channelId) return;
+        try {
+            const msg = await fetchBrentMessage();
+            if (msg) await send(channelId, `<@${userId}> ${msg}`);
+        } catch (err) { console.error('Brent cron error:', err); }
     });
 
     // NASDAQ — ping user at 2:45pm M–F
