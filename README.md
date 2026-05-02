@@ -1,87 +1,128 @@
 # discord-bot
 
-Got bored and decided to make a discord bot 
+Got bored and decided to make a discord bot
 
 ## Supported Commands
 
-- `/ping`:
-	- Usage: `/ping`
-	- What it does: Replies immediately with `Pong!`.
-	- Example output: `Pong!`
+### Fun / Utility
 
-- `/coin`:
-	- Usage: `/coin`
-	- What it does: Flips a coin and returns either `heads` or `tails`.
-	- Example output: `heads`
+- `/ping`
+  - What it does: Replies immediately with `Pong!`.
+  - Example output: `Pong!`
 
-- `/dice [sides]`:
-	- Usage: `/dice` or `/dice sides:10`
-	- What it does: Rolls a die (default 6 sides). Optional `sides` integer between 1 and 50.
-	- Example output: `4`
+- `/coin`
+  - What it does: Flips a coin and returns either `heads` or `tails`.
+  - Example output: `heads`
 
-- `/epoch`:
-	- Usage: `/epoch`
-	- What it does: Returns the current epoch timestamp in seconds.
-	- Example output: `1700000000`
+- `/dice [sides]`
+  - Usage: `/dice` or `/dice sides:10`
+  - What it does: Rolls a die (default 6 sides). Optional `sides` integer between 1 and 50.
+  - Example output: `4`
 
-- `/emojify text`:
-	- Usage: `/emojify text:"hello world"`
-	- What it does: Converts letters and digits into regional indicator and number emojis.
-	- Example output: `:regional_indicator_h: :regional_indicator_e: :regional_indicator_l: :regional_indicator_l: :regional_indicator_o:`
+- `/epoch`
+  - What it does: Returns the current epoch timestamp in seconds.
+  - Example output: `1700000000`
 
-- `/boi top:"TOP" bottom:"BOTTOM"`:
-	- Usage: `/boi top:"Top text" bottom:"Bottom text"`
-	- What it does: Generates a custom memegen image and replies with a direct image URL.
-	- Example output: `https://api.memegen.link/images/custom/Top_Text/Bottom_Text.png?...`
+- `/emojify text:"TEXT"`
+  - What it does: Converts letters and digits into regional indicator and number emojis.
+  - Example output: `:regional_indicator_h: :regional_indicator_e: ...`
 
-- `/facepalm top:"TOP" bottom:"BOTTOM"`:
-	- Usage: `/facepalm top:"Top text" bottom:"Bottom text"`
-	- What it does: Generates a Facepalm meme image URL and replies with it.
-	- Example output: `https://api.memegen.link/images/facepalm/Top_Text/Bottom_Text.jpg?...`
+- `/insult`
+  - What it does: Fetches a random insult from an external API and returns the text.
+  - Example output: `You're a [insult text]`
 
-- `/headout [top] [bottom]`:
-	- Usage: `/headout top:"..." bottom:"..."` (both options optional)
-	- What it does: Generates a custom meme URL using a preset background image.
-	- Example output: `https://api.memegen.link/images/custom/Top/Bottom.jpg?background=...`
+- `/putin`
+  - What it does: Replies with a fixed YouTube link.
+  - Example output: `https://youtu.be/noQXojwExRA`
 
-- `/mock top:"TOP" bottom:"BOTTOM"`:
-	- Usage: `/mock top:"Top" bottom:"Bottom"`
-	- What it does: Generates a SpongeBob mock meme image URL and replies with it.
-	- Example output: `https://api.memegen.link/images/spongebob/Top/Bottom.jpg?...`
+- `/dudewtf`
+  - What it does: Replies with a YouTube link.
 
-- `/insult`:
-	- Usage: `/insult`
-	- What it does: Fetches a random insult from an external API and returns the text. If the API fails, returns an error message.
-	- Example output: `You're a [insult text]`
+### Memes
 
-- `/putin`:
-	- Usage: `/putin`
-	- What it does: Replies with a fixed YouTube link.
-	- Example output: `https://youtu.be/noQXojwExRA`
+- `/boi top:"TOP" bottom:"BOTTOM"`
+  - What it does: Generates a custom memegen image and replies with a direct image URL.
 
-- `/wti`:
-	- Usage: `/wti`
-	- What it does: Fetches the latest WTI crude oil futures price (CL=F) via Yahoo Finance and returns the price per barrel with change and percent change.
-	- Example output: `WTI Crude Oil (CL=F): **$78.45/barrel** (+1.23, +1.59%)`
+- `/facepalm top:"TOP" bottom:"BOTTOM"`
+  - What it does: Generates a Facepalm meme image URL and replies with it.
 
-- `/luv`:
-	- Usage: `/luv`
-	- What it does: Fetches the latest Southwest Airlines (LUV) stock price via Yahoo Finance and returns the price with change and percent change.
-	- Example output: `Southwest Airlines (LUV): **$29.10** (-0.45, -1.52%)`
+- `/headout [top] [bottom]`
+  - What it does: Generates a custom meme URL using a preset background image.
 
-- `/tqqq`:
-	- Usage: `/tqqq`
-	- What it does: Fetches the latest ProShares UltraPro QQQ (TQQQ) ETF price via Yahoo Finance and returns the price with change and percent change.
-	- Example output: `TQQQ: **$52.30** (+2.10, +4.18%)`
+- `/mock top:"TOP" bottom:"BOTTOM"`
+  - What it does: Generates a SpongeBob mock meme image URL and replies with it.
 
-- `/weather zip:xxxxx`:
-	- Usage: `/weather zip:"90210"`
-	- What it does: Looks up current weather for a US ZIP using `WEATHER_API_KEY` (must be set). Replies with temperature in °F and location or an error if the API key / ZIP is invalid.
-	- Example output: `The temperature is 72.3°F — location: Beverly Hills`
+### Market Data
 
-Discord Bot (modern scaffold)
+- `/wti`
+  - What it does: Fetches the latest WTI crude oil futures price (CL=F) via Yahoo Finance.
+  - Example output: `WTI Crude Oil (CL=F): **$78.45/barrel** (+1.23, +1.59%)`
 
-Quick start
+- `/brent`
+  - What it does: Fetches the latest Brent crude oil futures price (BZ=F) via Yahoo Finance.
+  - Example output: `Brent Crude Oil (BZ=F): **$81.20/barrel** (+0.90, +1.12%)`
+
+- `/btc`
+  - What it does: Fetches the latest Bitcoin price (BTC-USD) via Yahoo Finance.
+  - Example output: `Bitcoin Price: **$62,450.00** (+1234.56, +2.01%)`
+
+- `/sp500`
+  - What it does: Fetches the latest S&P 500 index price (^GSPC) via Yahoo Finance.
+  - Example output: `S&P 500: **5,200.00** (+45.00, +0.87%)`
+
+- `/nasdaq`
+  - What it does: Fetches the latest NASDAQ Composite index price (^IXIC) via Yahoo Finance.
+  - Example output: `NASDAQ: **16,300.00** (+120.00, +0.74%)`
+
+- `/tqqq`
+  - What it does: Fetches the latest ProShares UltraPro QQQ (TQQQ) ETF price via Yahoo Finance.
+  - Example output: `TQQQ: **$52.30** (+2.10, +4.18%)`
+
+- `/goog`
+  - What it does: Fetches the latest Alphabet/Google (GOOGL) stock price via Yahoo Finance.
+  - Example output: `GOOGL: **$175.40** (-1.20, -0.68%)`
+
+- `/luv`
+  - What it does: Fetches the latest Southwest Airlines (LUV) stock price via Yahoo Finance.
+  - Example output: `Southwest Airlines (LUV): **$29.10** (-0.45, -1.52%)`
+
+- `/gas`
+  - What it does: Scrapes the AAA website for the current national average gas price.
+  - Example output: `AAA National Average Gas Price: **$3.45/gallon**`
+
+### Sports
+
+- `/bball year:YYYY month:MM day:DD`
+  - What it does: Returns a link to NBA scores for a specific date from the NBA API.
+  - Example output: `https://uman230-nba-api-2a9531748263.herokuapp.com/scores/2024/04/01`
+
+### Entertainment
+
+- `/tomato movie:"TITLE"`
+  - What it does: Looks up the Rotten Tomatoes Tomatometer and Audience score for a movie.
+  - Example output: `🍅 **Inception** (2010): **87%** Tomatometer | **91%** Audience`
+
+### Other
+
+- `/weather zip:XXXXX`
+  - What it does: Looks up current weather for a US ZIP code using `WEATHER_API_KEY`.
+  - Example output: `The temperature is 72.3°F — location: Beverly Hills`
+
+## Automated Crons
+
+| Schedule | What it does |
+|---|---|
+| Top of every hour, 8am–5pm M–F | Posts WTI crude oil price to `WTI_CHANNEL_ID` |
+| 1:20pm M–F | Pings user with WTI price + Kalshi link to `WTI_CHANNEL_ID` |
+| Every 5 min 8:30–8:55am M–F | Posts TQQQ price to `TQQQ_CHANNEL_ID` |
+| Every 15 min 9am–2pm M–F | Posts TQQQ price to `TQQQ_CHANNEL_ID` |
+| :10, :25, :40 every hour | Posts BTC price + Kalshi link to `BTC_CHANNEL_ID` |
+| :55 every hour | Pings user with BTC price + Kalshi daily link to `BTC_CHANNEL_ID` |
+| 2:45pm M–F | Pings user with S&P 500 price to `SP500_CHANNEL_ID` |
+| 2:45pm M–F | Pings user with NASDAQ price to `NASDAQ_CHANNEL_ID` |
+| 4:55pm M–F | Pings user with Brent crude price to `BRENT_CHANNEL_ID` |
+
+## Quick Start
 
 1. Install dependencies:
 
@@ -89,9 +130,9 @@ Quick start
 npm install
 ```
 
-2. Copy `.env.example` to `.env` and fill `TOKEN` and `CLIENT_ID` (and optional `GUILD_ID` for fast testing)
+2. Copy `.env.example` to `.env` and fill in the values (see below).
 
-3. Register commands (recommended during development):
+3. Register slash commands:
 
 ```bash
 npm run register-commands
@@ -100,23 +141,37 @@ npm run register-commands
 4. Run the bot:
 
 ```bash
-npm run dev
-# or
-npm start
+npm run dev   # development (nodemon)
+npm start     # production
 ```
 
-Files
+## Environment Variables
 
-- `bot.js`: main entrypoint using `discord.js` v14 and loads commands from `./commands`
-- `commands.js`: registers slash commands with Discord
-- `commands/*.js`: example slash commands (`ping`, `coin`)
+| Variable | Description |
+|---|---|
+| `TOKEN` | Discord bot token |
+| `CLIENT_ID` | Discord application client ID |
+| `GUILD_ID` | (Optional) Guild ID for fast command registration during development |
+| `WEATHER_API_KEY` | API key for OpenWeatherMap |
+| `USER_ID` | Discord user ID to ping in scheduled cron messages |
+| `WTI_CHANNEL_ID` | Channel ID for WTI crude oil cron messages |
+| `TQQQ_CHANNEL_ID` | Channel ID for TQQQ cron messages |
+| `BTC_CHANNEL_ID` | Channel ID for Bitcoin cron messages |
+| `SP500_CHANNEL_ID` | Channel ID for S&P 500 cron messages |
+| `NASDAQ_CHANNEL_ID` | Channel ID for NASDAQ cron messages |
+| `BRENT_CHANNEL_ID` | Channel ID for Brent crude oil cron messages |
 
-Notes
+## Files
 
-- Keep your bot token private. Do not commit `.env`.
-- If you need legacy message-based commands, we can add a message handler as well.
+- `bot.js` — main entrypoint, loads commands from `./commands`
+- `commands.js` — registers slash commands with Discord
+- `crons.js` — all scheduled cron jobs
+- `commands/*.js` — individual slash command handlers
 
 ## Heroku Commands
 
-1. Restart: `heroku restart --app umanchanda-discord-bot`
-2. Add env var: `heroku config:set ENV_VAR=<your-value> --app umanchanda-discord-bot`
+```bash
+heroku restart --app umanchanda-discord-bot
+heroku config:set ENV_VAR=value --app umanchanda-discord-bot
+heroku logs --tail --app umanchanda-discord-bot
+```
