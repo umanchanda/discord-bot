@@ -59,6 +59,16 @@ function registerCrons(client, userId) {
         } catch (err) { console.error('BTC ping cron error:', err); }
     });
 
+    // WTI — ping user at 1:20pm M–F
+    cron.schedule('20 13 * * 1-5', async () => {
+        const channelId = process.env.WTI_CHANNEL_ID;
+        if (!channelId) return;
+        try {
+            const msg = await fetchWtiMessage();
+            if (msg) await send(channelId, `<@${userId}> ${msg} https://kalshi.com/markets/kxwti/wti-oil-on-day?utm_source=kalshiweb_eventpage`);
+        } catch (err) { console.error('WTI ping cron error:', err); }
+    });
+
     // S&P 500 — ping user at 2:45pm M–F
     cron.schedule('45 14 * * 1-5', async () => {
         const channelId = process.env.SP500_CHANNEL_ID;
