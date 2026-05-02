@@ -70,6 +70,19 @@ cron.schedule('0 0-15/2 * * 1-5', sendWtiUpdate);
 // Sun–Thu 5 PM to 11:59 PM CST (Sunday open + daily reopen after maintenance)
 cron.schedule('0 17-23/2 * * 0-4', sendWtiUpdate);
 
+cron.schedule('20 13 * * 1-5', async () => {
+    const channelId = process.env.WTI_CHANNEL_ID;
+    if (!channelId) return;
+    try {
+        const msg = await fetchWtiMessage();
+        if (!msg) return;
+        const channel = await client.channels.fetch(channelId);
+        await channel.send(`<@${uman230}> ${msg} https://kalshi.com/markets/kxwti/wti-oil-on-day/KXWTI-26MAY04?utm_source=kalshiapp_eventpage`);
+    } catch (err) {
+        console.error('WTI 1:20 PM cron error:', err);
+    }
+});
+
 cron.schedule('30-55/5 8 * * 1-5', async () => {
     const channelId = process.env.TQQQ_CHANNEL_ID;
     if (!channelId) return;
