@@ -41,25 +41,6 @@ function registerCrons(client, userId) {
         } catch (err) { console.error('TQQQ cron error:', err); }
     });
 
-    // BTC — every 15 min (:10, :25, :40) and ping user at :55
-    cron.schedule('10,25,40 * * * *', async () => {
-        const channelId = process.env.BTC_CHANNEL_ID;
-        if (!channelId) return;
-        try {
-            const msg = await fetchBtcMessage();
-            if (msg) await send(channelId, `${msg} https://kalshi.com/markets/kxbtc15m/bitcoin-price-up-down?utm_source=kalshiweb_eventpage`);
-        } catch (err) { console.error('BTC cron error:', err); }
-    });
-
-    cron.schedule('55 * * * *', async () => {
-        const channelId = process.env.BTC_CHANNEL_ID;
-        if (!channelId) return;
-        try {
-            const msg = await fetchBtcMessage();
-            if (msg) await send(channelId, `<@${userId}> ${msg} https://kalshi.com/markets/kxbtcd/bitcoin-price-abovebelow?utm_source=kalshiweb_eventpage`);
-        } catch (err) { console.error('BTC ping cron error:', err); }
-    });
-
     // WTI — ping user at 1:20pm M–F
     cron.schedule('20 13 * * 1-5', async () => {
         const channelId = process.env.WTI_CHANNEL_ID;
