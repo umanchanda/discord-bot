@@ -27,7 +27,7 @@ module.exports = {
         await interaction.deferReply({ ephemeral: true });
 
         if (!process.env.PLAID_CLIENT_ID || !process.env.PLAID_SECRET || !process.env.PLAID_ACCESS_TOKEN) {
-            return interaction.editReply('Plaid is not configured. Run `node plaid-setup.js` first.');
+            return interaction.editReply('Plaid is not configured. Please acquire credentials');
         }
 
         try {
@@ -43,7 +43,7 @@ module.exports = {
             const lines = accounts.map(acct => {
                 const balance = acct.balances.current ?? acct.balances.available;
                 if (balance != null) total += balance;
-                const label = `${acct.name}${acct.mask ? ` (****${acct.mask})` : ''}`;
+                const label = `${acct.name}${acct.mask ? ` (••••${acct.mask})` : ''}`;
                 return `**${label}**: ${formatUSD(balance)}`;
             });
 
