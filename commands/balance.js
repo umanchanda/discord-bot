@@ -2,8 +2,9 @@ const { SlashCommandBuilder } = require('@discordjs/builders');
 const { PlaidApi, Configuration, PlaidEnvironments } = require('plaid');
 
 function getPlaidClient() {
+    const env = process.env.PLAID_ENV || 'sandbox';
     return new PlaidApi(new Configuration({
-        basePath: PlaidEnvironments.development,
+        basePath: PlaidEnvironments[env],
         baseOptions: {
             headers: {
                 'PLAID-CLIENT-ID': process.env.PLAID_CLIENT_ID,
