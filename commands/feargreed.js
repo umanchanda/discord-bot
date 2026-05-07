@@ -2,14 +2,15 @@ const { SlashCommandBuilder } = require('@discordjs/builders');
 const axios = require('axios');
 
 async function fetchFearGreedMessage() {
-    const res = await axios.get('https://production.dataviz.cnn.io/index/fearandgreed/graphdata', {
-        headers: { 'User-Agent': 'Mozilla/5.0' },
+    const res = await axios.get('https://fear-and-greed-index.p.rapidapi.com/v1/fgi', {
+        headers: {
+            'X-RapidAPI-Key': process.env.RAPIDAPI_KEY,
+            'X-RapidAPI-Host': 'fear-and-greed-index.p.rapidapi.com',
+        },
     });
-    const data = res.data?.fear_and_greed;
-    if (!data || data.score == null) return null;
-    const score = Math.round(data.score);
-    const rating = data.rating;
-    return `CNN Fear & Greed Index: **${score}/100** — **${rating}**`;
+    const now = res.data?.fgi?.now;
+    if (!now || now.value == null) return null;
+    return `CNN Fear & Greed Index: **${now.value}/100** — **${now.valueText}**`;
 }
 
 module.exports = {
