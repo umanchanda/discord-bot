@@ -78,6 +78,10 @@ Got bored and decided to make a discord bot
   - What it does: Fetches the latest ProShares UltraPro QQQ (TQQQ) ETF price via Yahoo Finance.
   - Example output: `TQQQ: **$52.30** (+2.10, +4.18%)`
 
+- `/sso`
+  - What it does: Fetches the latest ProShares Ultra S&P500 (SSO) ETF price via Yahoo Finance.
+  - Example output: `SSO: **$85.40** (+1.20, +1.43%)`
+
 - `/goog`
   - What it does: Fetches the latest Alphabet/Google (GOOGL) stock price via Yahoo Finance.
   - Example output: `GOOGL: **$175.40** (-1.20, -0.68%)`
@@ -90,11 +94,27 @@ Got bored and decided to make a discord bot
   - What it does: Scrapes the AAA website for the current national average gas price.
   - Example output: `AAA National Average Gas Price: **$3.45/gallon**`
 
+- `/feargreed`
+  - What it does: Fetches the current CNN Fear & Greed Index via RapidAPI. Requires `RAPIDAPI_KEY`.
+  - Example output: `CNN Fear & Greed Index: **72/100** — **Greed**`
+
+- `/balance`
+  - What it does: Fetches your Fidelity account balances via Plaid (ephemeral reply). Requires `PLAID_CLIENT_ID`, `PLAID_SECRET`, and `PLAID_ACCESS_TOKEN`.
+  - Example output: `Fidelity Balances — Brokerage (••••1234): $12,345.67 | Total: $12,345.67`
+
 ### Sports
 
 - `/bball year:YYYY month:MM day:DD`
   - What it does: Returns a link to NBA scores for a specific date from the NBA API.
   - Example output: `https://uman230-nba-api-2a9531748263.herokuapp.com/scores/2024/04/01`
+
+- `/f1 year:YYYY`
+  - What it does: Fetches the F1 race schedule for a given season via the Jolpi/Ergast API. Presents a dropdown to select a race and then shows a top-10 results embed with podium, fastest lap, and pole position.
+  - Example output: Embed with podium, top 10, fastest lap, and pole for the selected race.
+
+- `/flight callsign:"CALLSIGN"`
+  - What it does: Tracks a live flight by callsign via the ADS-B Exchange RapidAPI. Returns an embed with position, altitude, ground speed, heading, squawk, and ICAO hex. Requires `RAPIDAPI_KEY`.
+  - Example output: Embed showing `UAL123` at 35,000 ft, 480 kts, heading 270° W.
 
 ### Entertainment
 
@@ -116,6 +136,8 @@ Got bored and decided to make a discord bot
 | 1:20pm M–F | Pings user with WTI price + Kalshi link to `WTI_CHANNEL_ID` |
 | Every 5 min 8:30–8:55am M–F | Posts TQQQ price to `TQQQ_CHANNEL_ID` |
 | Every 15 min 9am–2pm M–F | Posts TQQQ price to `TQQQ_CHANNEL_ID` |
+| Every 5 min 8:30–8:55am M–F | Posts SSO price to `TQQQ_CHANNEL_ID` |
+| Every 15 min 9am–2pm M–F | Posts SSO price to `TQQQ_CHANNEL_ID` |
 | :10, :25, :40 every hour | Posts BTC price + Kalshi link to `BTC_CHANNEL_ID` |
 | :55 every hour | Pings user with BTC price + Kalshi daily link to `BTC_CHANNEL_ID` |
 | 2:45pm M–F | Pings user with S&P 500 price to `SP500_CHANNEL_ID` |
@@ -160,6 +182,11 @@ npm start     # production
 | `SP500_CHANNEL_ID` | Channel ID for S&P 500 cron messages |
 | `NASDAQ_CHANNEL_ID` | Channel ID for NASDAQ cron messages |
 | `BRENT_CHANNEL_ID` | Channel ID for Brent crude oil cron messages |
+| `RAPIDAPI_KEY` | RapidAPI key for the Fear & Greed Index API |
+| `PLAID_CLIENT_ID` | Plaid client ID for the `/balance` command |
+| `PLAID_SECRET` | Plaid secret for the `/balance` command |
+| `PLAID_ACCESS_TOKEN` | Plaid access token for the linked Fidelity account |
+| `PLAID_ENV` | Plaid environment (`sandbox` or `production`, defaults to `sandbox`) |
 
 ## Files
 
