@@ -69,7 +69,7 @@ module.exports = {
         }
 
         if (!ac) {
-            const hint = callsign !== raw ? ` (tried **${callsign}*)` : '';
+            const hint = callsign !== raw ? ` (tried **${callsign}**)` : '';
             return interaction.editReply(
                 `No active flight found for **${raw}**${hint}. The flight may not be airborne or visible to ADS-B receivers right now.`
             );
