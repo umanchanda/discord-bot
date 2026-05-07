@@ -32,6 +32,23 @@ async function fetchFlight(callsign) {
     return aircraft[0];
 }
 
+async function reverseGeocode(lat, lon) {
+    try {
+        const res = await axios.get('https://nominatim.openstreetmap.org/reverse', {
+            params: { lat, lon, format: 'json', zoom: 10 },
+            headers: { 'User-Agent': 'discord-bot/1.0' },
+            timeout: 3000,
+        });
+        if (res.data?.error) return null;
+        const a = res.data.address;
+        const locality = a.city || a.town || a.village || a.county || null;
+        const parts = [locality, a.state, a.country].filter(Boolean);
+        return parts.length ? parts.join(', ') : null;
+    } catch {
+        return null;
+    }
+}
+
 function formatAlt(alt) {
     if (alt == null) return 'N/A';
     if (alt === 'ground') return 'On ground';
@@ -78,14 +95,14 @@ module.exports = {
         const alt = ac.alt_baro;
         const onGround = alt === 'ground';
         const gs = ac.gs != null ? `${Math.round(ac.gs)} kts` : 'N/A';
-        const pos = (ac.lat != null && ac.lon != null)
-            ? `${ac.lat.toFixed(4)}°, ${ac.lon.toFixed(4)}°`
-            : 'N/A';
+        const hasPos = ac.lat != null && ac.lon != null;
+        const coords = hasPos ? `${ac.lat.toFixed(4)}°, ${ac.lon.toFixed(4)}°` : null;
+        const location = hasPos ? (await reverseGeocode(ac.lat, ac.lon) ?? coords) : 'N/A';
 
         const embed = new EmbedBuilder()
             .setTitle(`✈️ ${(ac.flight || callsign).trim()}`)
             .addFields(
-                { name: '📍 Position', value: pos, inline: true },
+                { name: '📍 Location', value: location, inline: true },
                 { name: '🛫 Altitude', value: formatAlt(alt), inline: true },
                 { name: '💨 Ground Speed', value: gs, inline: true },
                 { name: '🧭 Heading', value: formatHeading(ac.track), inline: true },
