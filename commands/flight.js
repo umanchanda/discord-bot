@@ -3,12 +3,7 @@ const { EmbedBuilder } = require('discord.js');
 const axios = require('axios');
 
 async function fetchFlight(callsign) {
-    const res = await axios.get(`https://adsbexchange-com1.p.rapidapi.com/v2/callsign/${callsign.toUpperCase()}/`, {
-        headers: {
-            'X-RapidAPI-Key': process.env.RAPIDAPI_KEY,
-            'X-RapidAPI-Host': 'adsbexchange-com1.p.rapidapi.com',
-        },
-    });
+    const res = await axios.get(`https://api.airplanes.live/v2/callsign/${callsign.toUpperCase()}`);
     const aircraft = res.data?.ac;
     if (!aircraft || aircraft.length === 0) return null;
     return aircraft[0];
