@@ -32,6 +32,27 @@ async function fetchFlight(callsign) {
     return aircraft[0];
 }
 
+async function fetchRouteInfo(hex) {
+    if (!process.env.RAPIDAPI_KEY) return null;
+    try {
+        const res = await axios.get(`https://aerodatabox.p.rapidapi.com/flights/icao24/${hex}`, {
+            headers: {
+                'X-RapidAPI-Key': process.env.RAPIDAPI_KEY,
+                'X-RapidAPI-Host': 'aerodatabox.p.rapidapi.com',
+            },
+            timeout: 5000,
+        });
+        const flight = Array.isArray(res.data) ? res.data[0] : res.data;
+        if (!flight) return null;
+        return {
+            dep: flight.departure?.airport,
+            arr: flight.arrival?.airport,
+        };
+    } catch {
+        return null;
+    }
+}
+
 async function reverseGeocode(lat, lon) {
     try {
         const res = await axios.get('https://nominatim.openstreetmap.org/reverse', {
@@ -97,20 +118,32 @@ module.exports = {
         const gs = ac.gs != null ? `${Math.round(ac.gs)} kts` : 'N/A';
         const hasPos = ac.lat != null && ac.lon != null;
         const coords = hasPos ? `${ac.lat.toFixed(4)}°, ${ac.lon.toFixed(4)}°` : null;
-        const location = hasPos ? (await reverseGeocode(ac.lat, ac.lon) ?? coords) : 'N/A';
+
+        const [location, route] = await Promise.all([
+            hasPos ? reverseGeocode(ac.lat, ac.lon).then(r => r ?? coords) : Promise.resolve('N/A'),
+            ac.hex ? fetchRouteInfo(ac.hex) : Promise.resolve(null),
+        ]);
+
+        const formatAirport = (ap) => ap ? `${ap.name ?? '?'} (${ap.iata ?? ap.icao ?? '?'})` : null;
+        const routeStr = (formatAirport(route?.dep) && formatAirport(route?.arr))
+            ? `${formatAirport(route.dep)} → ${formatAirport(route.arr)}`
+            : null;
+
+        const fields = [
+            { name: '📍 Location', value: location, inline: true },
+            { name: '🛫 Altitude', value: formatAlt(alt), inline: true },
+            { name: '💨 Ground Speed', value: gs, inline: true },
+            { name: '🧭 Heading', value: formatHeading(ac.track), inline: true },
+            { name: '📟 Squawk', value: ac.squawk || 'N/A', inline: true },
+            { name: '🔑 ICAO Hex', value: ac.hex?.toUpperCase() || 'N/A', inline: true },
+            { name: '📡 Source', value: ac.type || 'N/A', inline: true },
+            { name: '🟢 Status', value: onGround ? 'On ground' : 'Airborne', inline: true },
+        ];
+        if (routeStr) fields.splice(1, 0, { name: '🗺️ Route', value: routeStr, inline: false });
 
         const embed = new EmbedBuilder()
             .setTitle(`✈️ ${(ac.flight || callsign).trim()}`)
-            .addFields(
-                { name: '📍 Location', value: location, inline: true },
-                { name: '🛫 Altitude', value: formatAlt(alt), inline: true },
-                { name: '💨 Ground Speed', value: gs, inline: true },
-                { name: '🧭 Heading', value: formatHeading(ac.track), inline: true },
-                { name: '📟 Squawk', value: ac.squawk || 'N/A', inline: true },
-                { name: '🔑 ICAO Hex', value: ac.hex?.toUpperCase() || 'N/A', inline: true },
-                { name: '📡 Source', value: ac.type || 'N/A', inline: true },
-                { name: '🟢 Status', value: onGround ? 'On ground' : 'Airborne', inline: true },
-            )
+            .addFields(...fields)
             .setColor(onGround ? 0x888888 : 0x00aaff)
             .setFooter({ text: 'Data via airplanes.live · Updates every ~500ms' });
 
