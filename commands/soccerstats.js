@@ -1,22 +1,30 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { StringSelectMenuBuilder, ActionRowBuilder, EmbedBuilder } = require('discord.js');
 
-const FOTMOB_LEAGUES = {
-    47:  { name: 'Premier League', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿' },
-    87:  { name: 'La Liga',        flag: '🇪🇸' },
-    54:  { name: 'Bundesliga',     flag: '🇩🇪' },
-    53:  { name: 'Ligue 1',        flag: '🇫🇷' },
-    130: { name: 'MLS',            flag: '🇺🇸' },
-};
-
-const FOTMOB_HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (compatible; DiscordBot/1.0)',
+const LEAGUES = {
+    'premier_league': { slug: 'eng.1', name: 'Premier League', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿' },
+    'la_liga':        { slug: 'esp.1', name: 'La Liga',         flag: '🇪🇸' },
+    'bundesliga':     { slug: 'ger.1', name: 'Bundesliga',      flag: '🇩🇪' },
+    'ligue_1':        { slug: 'fra.1', name: 'Ligue 1',         flag: '🇫🇷' },
+    'mls':            { slug: 'usa.1', name: 'MLS',             flag: '🇺🇸' },
 };
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('soccerstats')
         .setDescription('Get detailed stats for a soccer match')
+        .addStringOption(opt =>
+            opt.setName('league')
+                .setDescription('Which league?')
+                .setRequired(true)
+                .addChoices(
+                    { name: 'Premier League', value: 'premier_league' },
+                    { name: 'La Liga',        value: 'la_liga' },
+                    { name: 'Bundesliga',     value: 'bundesliga' },
+                    { name: 'Ligue 1',        value: 'ligue_1' },
+                    { name: 'MLS',            value: 'mls' },
+                )
+        )
         .addIntegerOption(opt =>
             opt.setName('year').setDescription('Year (e.g. 2025)').setRequired(true)
         )
@@ -28,46 +36,45 @@ module.exports = {
         ),
 
     async execute(interaction) {
-        const year  = interaction.options.getInteger('year');
-        const month = interaction.options.getInteger('month');
-        const day   = interaction.options.getInteger('day');
-        const mm    = String(month).padStart(2, '0');
-        const dd    = String(day).padStart(2, '0');
-        const dateStr    = `${year}${mm}${dd}`;
-        const displayDate = `${year}-${mm}-${dd}`;
+        const leagueKey   = interaction.options.getString('league');
+        const year        = interaction.options.getInteger('year');
+        const month       = interaction.options.getInteger('month');
+        const day         = interaction.options.getInteger('day');
+        const league      = LEAGUES[leagueKey];
+        const dateStr     = `${year}${String(month).padStart(2, '0')}${String(day).padStart(2, '0')}`;
+        const displayDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
         await interaction.deferReply();
 
-        // Step 1: fetch matches for the date
-        let matches = [];
+        // Step 1: fetch scoreboard to get event list
+        let events;
         try {
-            const res = await fetch(`https://www.fotmob.com/api/matches?date=${dateStr}`, { headers: FOTMOB_HEADERS });
+            const res = await fetch(
+                `https://site.api.espn.com/apis/site/v2/sports/soccer/${league.slug}/scoreboard?dates=${dateStr}`
+            );
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const body = await res.json();
-
-            for (const league of (body.leagues || [])) {
-                const leagueMeta = FOTMOB_LEAGUES[league.id];
-                if (!leagueMeta) continue;
-                for (const match of (league.matches || [])) {
-                    const home = match.homeTeam?.name ?? match.home?.name ?? '?';
-                    const away = match.awayTeam?.name ?? match.away?.name ?? '?';
-                    matches.push({ id: match.id, home, away, ...leagueMeta });
-                }
-            }
+            events = body.events || [];
         } catch (err) {
-            console.error('FotMob matches fetch error:', err);
-            return interaction.editReply('Failed to fetch matches from FotMob.');
+            console.error('ESPN scoreboard fetch error:', err);
+            return interaction.editReply('Failed to fetch matches from ESPN.');
         }
 
-        if (matches.length === 0) {
-            return interaction.editReply(`No matches found for the selected leagues on **${displayDate}**.`);
+        if (events.length === 0) {
+            return interaction.editReply(`No **${league.name}** matches found on **${displayDate}**.`);
         }
 
-        const options = matches.slice(0, 25).map(m => ({
-            label: `${m.home} vs ${m.away}`.slice(0, 100),
-            description: `${m.flag} ${m.name}`,
-            value: String(m.id),
-        }));
+        const options = events.slice(0, 25).map(e => {
+            const comp = e.competitions[0];
+            const home = comp.competitors.find(c => c.homeAway === 'home');
+            const away = comp.competitors.find(c => c.homeAway === 'away');
+            const detail = comp.status.type.shortDetail;
+            return {
+                label: `${home.team.displayName} vs ${away.team.displayName}`.slice(0, 100),
+                description: detail,
+                value: e.id,
+            };
+        });
 
         const select = new StringSelectMenuBuilder()
             .setCustomId('soccerstats_match_select')
@@ -75,7 +82,7 @@ module.exports = {
             .addOptions(options);
 
         await interaction.editReply({
-            content: `**Matches on ${displayDate}** — Select one:`,
+            content: `**${league.flag} ${league.name} — ${displayDate}** · Select a match:`,
             components: [new ActionRowBuilder().addComponents(select)],
         });
 
@@ -92,75 +99,80 @@ module.exports = {
 
         await picked.deferUpdate();
 
-        const matchId = picked.values[0];
-        const matchMeta = matches.find(m => String(m.id) === matchId);
+        const eventId = picked.values[0];
 
-        // Step 2: fetch match details
-        let details;
+        // Step 2: fetch match summary
+        let summary;
         try {
-            const res = await fetch(`https://www.fotmob.com/api/matchDetails?matchId=${matchId}`, { headers: FOTMOB_HEADERS });
+            const res = await fetch(
+                `https://site.api.espn.com/apis/site/v2/sports/soccer/${league.slug}/summary?event=${eventId}`
+            );
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            details = await res.json();
+            summary = await res.json();
         } catch (err) {
-            console.error('FotMob match details fetch error:', err);
+            console.error('ESPN summary fetch error:', err);
             return interaction.editReply({ content: 'Failed to fetch match details.', components: [] });
         }
 
-        const general    = details.general    || {};
-        const matchFacts = details.content?.matchFacts || {};
+        const comp        = summary.header?.competitions?.[0] ?? {};
+        const homeComp    = comp.competitors?.find(c => c.homeAway === 'home') ?? {};
+        const awayComp    = comp.competitors?.find(c => c.homeAway === 'away') ?? {};
+        const homeTeam    = homeComp.team?.displayName ?? 'Home';
+        const awayTeam    = awayComp.team?.displayName ?? 'Away';
+        const homeScore   = homeComp.score ?? '-';
+        const awayScore   = awayComp.score ?? '-';
+        const matchStatus = comp.status?.type?.description ?? '';
 
-        const homeTeam  = general.homeTeam?.name  ?? matchMeta.home;
-        const awayTeam  = general.awayTeam?.name  ?? matchMeta.away;
-        const homeScore = general.homeTeam?.score ?? '-';
-        const awayScore = general.awayTeam?.score ?? '-';
+        // Stats — ESPN returns per-team arrays under boxscore.teams
+        const boxTeams = summary.boxscore?.teams ?? [];
+        const homeBT   = boxTeams.find(t => t.homeAway === 'home') ?? {};
+        const awayBT   = boxTeams.find(t => t.homeAway === 'away') ?? {};
 
-        // Flatten all stat entries across groups
-        const allStats = (matchFacts.stats?.stats || []).flatMap(g => g.stats || []);
-        const getStat = (...titles) => {
-            for (const title of titles) {
-                const s = allStats.find(s => s.title?.toLowerCase().includes(title.toLowerCase()));
-                if (s) return { home: s.homeValue, away: s.awayValue };
+        const getStat = (teamStats, ...names) => {
+            for (const name of names) {
+                const s = (teamStats.statistics ?? []).find(
+                    s => s.name === name || s.label?.toLowerCase().includes(name.toLowerCase())
+                );
+                if (s) return s.displayValue;
             }
             return null;
         };
 
-        const statLine = (label, stat, unit = '') => {
-            if (!stat) return null;
-            return `**${label}:** ${stat.home}${unit} – ${stat.away}${unit}`;
+        const statRow = (label, homeStat, awayStat) => {
+            if (!homeStat && !awayStat) return null;
+            return `**${label}:** ${homeStat ?? '-'} – ${awayStat ?? '-'}`;
         };
 
         const statsLines = [
-            statLine('Possession',      getStat('possession'),                '%'),
-            statLine('xG',              getStat('xg', 'expected goals')),
-            statLine('Shots',           getStat('total shots', 'shots')),
-            statLine('Shots on Target', getStat('shots on target', 'on target')),
-            statLine('Corners',         getStat('corner')),
-            statLine('Fouls',           getStat('foul')),
+            statRow('Possession',      getStat(homeBT, 'possessionPct', 'Possession'),        getStat(awayBT, 'possessionPct', 'Possession')),
+            statRow('Shots',           getStat(homeBT, 'totalShots', 'Shots'),                getStat(awayBT, 'totalShots', 'Shots')),
+            statRow('Shots on Target', getStat(homeBT, 'shotsOnTarget', 'Shots on Target'),   getStat(awayBT, 'shotsOnTarget', 'Shots on Target')),
+            statRow('Corners',         getStat(homeBT, 'corners', 'Corner Kicks'),            getStat(awayBT, 'corners', 'Corner Kicks')),
+            statRow('Fouls',           getStat(homeBT, 'foulsCommitted', 'Fouls'),            getStat(awayBT, 'foulsCommitted', 'Fouls')),
+            statRow('Yellow Cards',    getStat(homeBT, 'yellowCards', 'Yellow Cards'),        getStat(awayBT, 'yellowCards', 'Yellow Cards')),
+            statRow('Red Cards',       getStat(homeBT, 'redCards', 'Red Cards'),              getStat(awayBT, 'redCards', 'Red Cards')),
         ].filter(Boolean);
 
-        // Goal events
-        const events = matchFacts.events?.events || [];
-        const goalLines = events
-            .filter(e => ['Goal', 'goal'].includes(e.type))
-            .map(e => {
-                const scorer = e.player?.name ?? e.playerName ?? 'Unknown';
-                const assist = e.assistStr ? ` (assist: ${e.assistStr})` : '';
-                const time   = e.time ? `${e.time}'` : '';
-                const side   = e.isHome ? homeTeam : awayTeam;
-                return `${time} **${scorer}**${assist} — ${side}`;
-            });
+        // Scoring plays
+        const goalLines = (summary.scoringPlays ?? []).map(sp => {
+            const time = sp.clock?.displayValue ? `${sp.clock.displayValue}'` : '';
+            const team = sp.team?.displayName ?? '';
+            const text = sp.text ?? '';
+            return `${time} **${team}** — ${text}`.trim();
+        });
 
-        const infoBox    = matchFacts.infoBox   || {};
-        const stadium    = infoBox.Stadium?.name ?? null;
-        const attendance = infoBox.Attendance?.value ?? null;
+        // Venue
+        const venue      = summary.gameInfo?.venue ?? summary.venue ?? null;
+        const venueName  = venue?.fullName ?? null;
+        const attendance = summary.gameInfo?.attendance ?? null;
 
         const embed = new EmbedBuilder()
-            .setTitle(`${matchMeta.flag} ${matchMeta.name} — ${homeTeam} vs ${awayTeam}`)
-            .setDescription(`**Score: ${homeScore} – ${awayScore}**`)
+            .setTitle(`${league.flag} ${league.name} — ${homeTeam} vs ${awayTeam}`)
+            .setDescription(`**${homeScore} – ${awayScore}** · ${matchStatus}`)
             .setColor(0x00b4d8);
 
         if (statsLines.length > 0) {
-            embed.addFields({ name: '📊 Stats (Home – Away)', value: statsLines.join('\n') });
+            embed.addFields({ name: `📊 Stats (${homeTeam} – ${awayTeam})`, value: statsLines.join('\n') });
         }
 
         if (goalLines.length > 0) {
@@ -168,9 +180,9 @@ module.exports = {
         }
 
         const footerParts = [];
-        if (stadium)    footerParts.push(`📍 ${stadium}`);
+        if (venueName)  footerParts.push(`📍 ${venueName}`);
         if (attendance) footerParts.push(`👥 ${Number(attendance).toLocaleString()}`);
-        embed.setFooter({ text: footerParts.length ? footerParts.join(' · ') : 'Powered by FotMob' });
+        embed.setFooter({ text: footerParts.length ? footerParts.join(' · ') : 'Powered by ESPN' });
 
         await interaction.editReply({ embeds: [embed], components: [] });
     },
