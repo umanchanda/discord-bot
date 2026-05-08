@@ -2,26 +2,11 @@ const { SlashCommandBuilder } = require('@discordjs/builders');
 const { EmbedBuilder } = require('discord.js');
 
 const LEAGUES = {
-    'premier_league': { id: 39,  name: 'Premier League',  flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿' },
-    'la_liga':        { id: 140, name: 'La Liga',          flag: '🇪🇸' },
-    'bundesliga':     { id: 78,  name: 'Bundesliga',       flag: '🇩🇪' },
-    'ligue_1':        { id: 61,  name: 'Ligue 1',          flag: '🇫🇷' },
-    'mls':            { id: 253, name: 'MLS',              flag: '🇺🇸' },
-};
-
-const STATUS_LABELS = {
-    'NS':  'Not Started',
-    '1H':  '1st Half',
-    'HT':  'Half Time',
-    '2H':  '2nd Half',
-    'ET':  'Extra Time',
-    'P':   'Penalties',
-    'FT':  'Full Time',
-    'AET': 'After Extra Time',
-    'PEN': 'After Penalties',
-    'PST': 'Postponed',
-    'CANC':'Cancelled',
-    'ABD': 'Abandoned',
+    'premier_league': { slug: 'eng.1', name: 'Premier League', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿' },
+    'la_liga':        { slug: 'esp.1', name: 'La Liga',         flag: '🇪🇸' },
+    'bundesliga':     { slug: 'ger.1', name: 'Bundesliga',      flag: '🇩🇪' },
+    'ligue_1':        { slug: 'fra.1', name: 'Ligue 1',         flag: '🇫🇷' },
+    'mls':            { slug: 'usa.1', name: 'MLS',             flag: '🇺🇸' },
 };
 
 module.exports = {
@@ -42,67 +27,59 @@ module.exports = {
         ),
 
     async execute(interaction) {
-        const apiKey = process.env.APISPORTS_KEY;
-        if (!apiKey) {
-            return interaction.reply({ content: 'API-Sports key not configured. Set APISPORTS_KEY in .env', ephemeral: true });
-        }
-
         const leagueKey = interaction.options.getString('league');
         const league = LEAGUES[leagueKey];
-        const today = new Date().toISOString().split('T')[0];
-        const season = new Date().getFullYear();
 
         await interaction.deferReply();
 
         try {
             const res = await fetch(
-                `https://v3.football.api-sports.io/fixtures?league=${league.id}&season=${season}&date=${today}`,
-                {
-                    headers: {
-                        'x-apisports-key': apiKey,
-                    },
-                }
+                `https://site.api.espn.com/apis/site/v2/sports/soccer/${league.slug}/scoreboard`
             );
 
             if (!res.ok) {
-                const txt = await res.text();
-                return interaction.editReply(`API error: ${res.status} — ${txt}`);
+                return interaction.editReply(`ESPN API error: ${res.status}`);
             }
 
             const body = await res.json();
-            const fixtures = body.response;
+            const events = body.events;
 
-            if (!fixtures || fixtures.length === 0) {
-                return interaction.editReply(`No matches found for **${league.name}** today (${today}).`);
+            if (!events || events.length === 0) {
+                return interaction.editReply(`No matches found for **${league.name}** today.`);
             }
 
-            const lines = fixtures.map(f => {
-                const home = f.teams.home.name;
-                const away = f.teams.away.name;
-                const status = f.fixture.status.short;
-                const elapsed = f.fixture.status.elapsed;
-                const homeGoals = f.goals.home ?? '-';
-                const awayGoals = f.goals.away ?? '-';
-                const label = STATUS_LABELS[status] || status;
+            const lines = events.map(event => {
+                const competition = event.competitions[0];
+                const home = competition.competitors.find(c => c.homeAway === 'home');
+                const away = competition.competitors.find(c => c.homeAway === 'away');
+                const status = competition.status.type.name;
+                const detail = competition.status.type.shortDetail;
+                const clock = competition.status.displayClock;
+
+                const homeName = home.team.displayName;
+                const awayName = away.team.displayName;
+                const homeScore = home.score ?? '-';
+                const awayScore = away.score ?? '-';
 
                 let statusStr;
-                if (status === 'NS') {
-                    const kickoff = new Date(f.fixture.date);
-                    statusStr = `KO ${kickoff.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' })}`;
-                } else if (['1H', '2H', 'ET'].includes(status)) {
-                    statusStr = `${elapsed}'`;
+                if (status === 'STATUS_SCHEDULED') {
+                    statusStr = detail;
+                } else if (status === 'STATUS_IN_PROGRESS') {
+                    statusStr = clock;
+                } else if (status === 'STATUS_HALFTIME') {
+                    statusStr = 'HT';
                 } else {
-                    statusStr = label;
+                    statusStr = detail;
                 }
 
-                return `**${home}** ${homeGoals} - ${awayGoals} **${away}** *(${statusStr})*`;
+                return `**${homeName}** ${homeScore} - ${awayScore} **${awayName}** *(${statusStr})*`;
             });
 
             const embed = new EmbedBuilder()
-                .setTitle(`${league.flag} ${league.name} — ${today}`)
+                .setTitle(`${league.flag} ${league.name}`)
                 .setDescription(lines.join('\n'))
                 .setColor(0x00b4d8)
-                .setFooter({ text: 'Powered by API-Football' });
+                .setFooter({ text: 'Powered by ESPN' });
 
             return interaction.editReply({ embeds: [embed] });
 
