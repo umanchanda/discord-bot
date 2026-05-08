@@ -42,9 +42,9 @@ module.exports = {
         ),
 
     async execute(interaction) {
-        const apiKey = process.env.RAPIDAPI_KEY;
+        const apiKey = process.env.APISPORTS_KEY;
         if (!apiKey) {
-            return interaction.reply({ content: 'RapidAPI key not configured. Set RAPIDAPI_KEY in .env', ephemeral: true });
+            return interaction.reply({ content: 'API-Sports key not configured. Set APISPORTS_KEY in .env', ephemeral: true });
         }
 
         const leagueKey = interaction.options.getString('league');
@@ -56,11 +56,10 @@ module.exports = {
 
         try {
             const res = await fetch(
-                `https://api-football-v1.p.rapidapi.com/v3/fixtures?league=${league.id}&season=${season}&date=${today}`,
+                `https://v3.football.api-sports.io/fixtures?league=${league.id}&season=${season}&date=${today}`,
                 {
                     headers: {
-                        'X-RapidAPI-Key': apiKey,
-                        'X-RapidAPI-Host': 'api-football-v1.p.rapidapi.com',
+                        'x-apisports-key': apiKey,
                     },
                 }
             );
