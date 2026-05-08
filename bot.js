@@ -40,7 +40,6 @@ const _handleReady = () => {
 	_readyHandled = true;
 	console.log(`Logged in as ${client.user.tag}`);
 };
-client.once('ready', _handleReady);
 client.once('clientReady', _handleReady);
 
 registerCrons(client, uman230);
