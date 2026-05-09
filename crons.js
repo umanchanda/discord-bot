@@ -61,6 +61,26 @@ function registerCrons(client, userId) {
         } catch (err) { console.error('SP500 cron error:', err); }
     });
 
+    // Brent — top of every hour, 8am–5pm M–F
+    cron.schedule('0 8-17 * * 1-5', async () => {
+        const channelId = process.env.BRENT_CHANNEL_ID;
+        if (!channelId) return;
+        try {
+            const msg = await fetchBrentMessage();
+            if (msg) await send(channelId, msg);
+        } catch (err) { console.error('Brent cron error:', err); }
+    });
+
+    // Brent — ping user at 1:20pm M–F
+    cron.schedule('20 13 * * 1-5', async () => {
+        const channelId = process.env.BRENT_CHANNEL_ID;
+        if (!channelId) return;
+        try {
+            const msg = await fetchBrentMessage();
+            if (msg) await send(channelId, `<@${userId}> ${msg}`);
+        } catch (err) { console.error('Brent ping cron error:', err); }
+    });
+
     // Brent — ping user at 4:55pm M–F
     cron.schedule('55 16 * * 1-5', async () => {
         const channelId = process.env.BRENT_CHANNEL_ID;
