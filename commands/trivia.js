@@ -18,79 +18,89 @@ function shuffle(arr) {
     return arr.sort(() => Math.random() - 0.5);
 }
 
+function buildRow(answers, labels, disabled = false, chosenIdx = null, correct = null) {
+    return new ActionRowBuilder().addComponents(
+        answers.map((ans, i) => {
+            let style = ButtonStyle.Primary;
+            if (disabled) {
+                if (ans === correct) style = ButtonStyle.Success;
+                else if (i === chosenIdx) style = ButtonStyle.Danger;
+                else style = ButtonStyle.Secondary;
+            }
+            return new ButtonBuilder()
+                .setCustomId(`trivia_${i}`)
+                .setLabel(`${labels[i]}: ${ans}`)
+                .setStyle(style)
+                .setDisabled(disabled);
+        })
+    );
+}
+
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('trivia')
-        .setDescription('Answer a random sports trivia question'),
+        .setDescription('Answer sports trivia questions')
+        .addIntegerOption(opt =>
+            opt.setName('questions')
+                .setDescription('Number of questions (1-20)')
+                .setRequired(false)
+                .setMinValue(1)
+                .setMaxValue(20)
+        ),
     async execute(interaction) {
         await interaction.deferReply();
+        const total = interaction.options.getInteger('questions') ?? 1;
+
         try {
-            const res = await axios.get('https://opentdb.com/api.php?amount=1&category=21&type=multiple');
-            const q = res.data.results[0];
-            if (!q) return interaction.editReply('Could not fetch a trivia question. Try again!');
+            const res = await axios.get(`https://opentdb.com/api.php?amount=${total}&category=21&type=multiple`);
+            const questions = res.data.results;
+            if (!questions?.length) return interaction.editReply('Could not fetch trivia questions. Try again!');
 
-            const question = decodeHtml(q.question);
-            const correct = decodeHtml(q.correct_answer);
-            const answers = shuffle([correct, ...q.incorrect_answers.map(decodeHtml)]);
             const labels = ['A', 'B', 'C', 'D'];
+            let score = 0;
 
-            const row = new ActionRowBuilder().addComponents(
-                answers.map((ans, i) =>
-                    new ButtonBuilder()
-                        .setCustomId(`trivia_${i}`)
-                        .setLabel(`${labels[i]}: ${ans}`)
-                        .setStyle(ButtonStyle.Primary)
-                )
-            );
+            for (let idx = 0; idx < questions.length; idx++) {
+                const q = questions[idx];
+                const question = decodeHtml(q.question);
+                const correct = decodeHtml(q.correct_answer);
+                const answers = shuffle([correct, ...q.incorrect_answers.map(decodeHtml)]);
+                const header = `**Sports Trivia** *(${q.difficulty})* — Question ${idx + 1}/${questions.length} | Score: ${score}/${idx}\n\n${question}`;
 
-            const response = await interaction.editReply({
-                content: `**Sports Trivia** *(${q.difficulty})*\n\n${question}`,
-                components: [row],
-            });
-
-            try {
-                const btn = await response.awaitMessageComponent({
-                    filter: i => i.user.id === interaction.user.id,
-                    componentType: ComponentType.Button,
-                    time: 30_000,
+                const response = await interaction.editReply({
+                    content: header,
+                    components: [buildRow(answers, labels)],
                 });
 
-                const chosenIdx = parseInt(btn.customId.split('_')[1]);
-                const chosen = answers[chosenIdx];
-                const isCorrect = chosen === correct;
+                try {
+                    const btn = await response.awaitMessageComponent({
+                        filter: i => i.user.id === interaction.user.id,
+                        componentType: ComponentType.Button,
+                        time: 30_000,
+                    });
 
-                const disabledRow = new ActionRowBuilder().addComponents(
-                    answers.map((ans, i) =>
-                        new ButtonBuilder()
-                            .setCustomId(`trivia_${i}`)
-                            .setLabel(`${labels[i]}: ${ans}`)
-                            .setStyle(ans === correct ? ButtonStyle.Success : i === chosenIdx ? ButtonStyle.Danger : ButtonStyle.Secondary)
-                            .setDisabled(true)
-                    )
-                );
+                    const chosenIdx = parseInt(btn.customId.split('_')[1]);
+                    const isCorrect = answers[chosenIdx] === correct;
+                    if (isCorrect) score++;
 
-                await btn.update({
-                    content: `**Sports Trivia** *(${q.difficulty})*\n\n${question}\n\n${isCorrect ? '✅ Correct!' : `❌ Wrong! The correct answer was **${correct}**`}`,
-                    components: [disabledRow],
-                });
-            } catch {
-                const disabledRow = new ActionRowBuilder().addComponents(
-                    answers.map((ans, i) =>
-                        new ButtonBuilder()
-                            .setCustomId(`trivia_${i}`)
-                            .setLabel(`${labels[i]}: ${ans}`)
-                            .setStyle(ans === correct ? ButtonStyle.Success : ButtonStyle.Secondary)
-                            .setDisabled(true)
-                    )
-                );
-                await interaction.editReply({
-                    content: `**Sports Trivia** *(${q.difficulty})*\n\n${question}\n\n⏱️ Time's up! The correct answer was **${correct}**`,
-                    components: [disabledRow],
-                });
+                    const result = isCorrect ? '✅ Correct!' : `❌ Wrong! The correct answer was **${correct}**`;
+                    await btn.update({
+                        content: `${header}\n\n${result}`,
+                        components: [buildRow(answers, labels, true, chosenIdx, correct)],
+                    });
+                } catch {
+                    await interaction.editReply({
+                        content: `${header}\n\n⏱️ Time's up! The correct answer was **${correct}**`,
+                        components: [buildRow(answers, labels, true, null, correct)],
+                    });
+                }
+
+                if (idx < questions.length - 1) await new Promise(r => setTimeout(r, 2000));
             }
+
+            await interaction.followUp(`🏆 Final Score: **${score}/${questions.length}**`);
         } catch (err) {
             console.error('Trivia command error:', err);
-            try { await interaction.editReply('Failed to fetch trivia question.'); } catch (e) {}
+            try { await interaction.editReply('Failed to fetch trivia questions.'); } catch (e) {}
         }
     },
 };
