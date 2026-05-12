@@ -24,7 +24,7 @@ function registerCrons(client, userId) {
 
     // SSO — every 5 min during pre-market (8:30–8:55am), then every 15 min (9am–2pm) M–F
     cron.schedule('30-55/5 8 * * 1-5', async () => {
-        const channelId = process.env.TQQQ_CHANNEL_ID;
+        const channelId = process.env.SSO_CHANNEL_ID;
         if (!channelId) return;
         try {
             const msg = await fetchSsoMessage();
@@ -33,7 +33,7 @@ function registerCrons(client, userId) {
     });
 
     cron.schedule('*/15 9-14 * * 1-5', async () => {
-        const channelId = process.env.TQQQ_CHANNEL_ID;
+        const channelId = process.env.SSO_CHANNEL_ID;
         if (!channelId) return;
         try {
             const msg = await fetchSsoMessage();
