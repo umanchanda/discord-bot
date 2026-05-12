@@ -1,5 +1,4 @@
 const cron = require('node-cron');
-const { fetchBtcMessage } = require('./commands/btc');
 const { fetchWtiMessage } = require('./commands/wti');
 const { fetchSsoMessage } = require('./commands/sso');
 const { fetchSp500Message } = require('./commands/sp500');
