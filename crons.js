@@ -40,26 +40,6 @@ function registerCrons(client, userId) {
         } catch (err) { console.error('SSO cron error:', err); }
     });
 
-    // WTI — ping user at 1:20pm M–F
-    cron.schedule('20 13 * * 1-5', async () => {
-        const channelId = process.env.WTI_CHANNEL_ID;
-        if (!channelId) return;
-        try {
-            const msg = await fetchWtiMessage();
-            if (msg) await send(channelId, `<@${userId}> ${msg} https://kalshi.com/markets/kxwti/wti-oil-on-day?utm_source=kalshiweb_eventpage`);
-        } catch (err) { console.error('WTI ping cron error:', err); }
-    });
-
-    // S&P 500 — ping user at 2:45pm M–F
-    cron.schedule('45 14 * * 1-5', async () => {
-        const channelId = process.env.SP500_CHANNEL_ID;
-        if (!channelId) return;
-        try {
-            const msg = await fetchSp500Message();
-            if (msg) await send(channelId, `<@${userId}> ${msg}`);
-        } catch (err) { console.error('SP500 cron error:', err); }
-    });
-
     // Brent — top of every hour, 8am–5pm M–F
     cron.schedule('0 8-17 * * 1-5', async () => {
         const channelId = process.env.BRENT_CHANNEL_ID;
@@ -70,34 +50,14 @@ function registerCrons(client, userId) {
         } catch (err) { console.error('Brent cron error:', err); }
     });
 
-    // Brent — ping user at 1:20pm M–F
-    cron.schedule('20 13 * * 1-5', async () => {
-        const channelId = process.env.BRENT_CHANNEL_ID;
-        if (!channelId) return;
-        try {
-            const msg = await fetchBrentMessage();
-            if (msg) await send(channelId, `<@${userId}> ${msg}`);
-        } catch (err) { console.error('Brent ping cron error:', err); }
-    });
-
     // Brent — ping user at 4:55pm M–F
-    cron.schedule('55 16 * * 1-5', async () => {
+    cron.schedule('55 15 * * 1-5', async () => {
         const channelId = process.env.BRENT_CHANNEL_ID;
         if (!channelId) return;
         try {
             const msg = await fetchBrentMessage();
             if (msg) await send(channelId, `<@${userId}> ${msg}`);
         } catch (err) { console.error('Brent cron error:', err); }
-    });
-
-    // NASDAQ — ping user at 2:45pm M–F
-    cron.schedule('45 14 * * 1-5', async () => {
-        const channelId = process.env.NASDAQ_CHANNEL_ID;
-        if (!channelId) return;
-        try {
-            const msg = await fetchNasdaqMessage();
-            if (msg) await send(channelId, `<@${userId}> ${msg}`);
-        } catch (err) { console.error('NASDAQ cron error:', err); }
     });
 }
 
