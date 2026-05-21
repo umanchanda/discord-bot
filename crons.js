@@ -69,16 +69,6 @@ function registerCrons(client, userId) {
             if (msg) await send(channelId, msg);
         } catch (err) { console.error('Brent cron error:', err); }
     });
-
-    // Brent — ping user at 4:55pm M–F
-    cron.schedule('55 15 * * 1-5', async () => {
-        const channelId = process.env.BRENT_CHANNEL_ID;
-        if (!channelId) return;
-        try {
-            const msg = await fetchBrentMessage();
-            if (msg) await send(channelId, `<@${userId}> ${msg}`);
-        } catch (err) { console.error('Brent cron error:', err); }
-    });
 }
 
 module.exports = { registerCrons };
