@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, ComponentType } = require('discord.js');
 const axios = require('axios');
 
 const API = process.env.FLIGHT_DIARY_API_URL || 'https://flight-data-26kb.onrender.com';
@@ -15,11 +15,6 @@ module.exports = {
         .addSubcommand(sub =>
             sub.setName('flights')
                 .setDescription('Recent flights')
-                .addStringOption(opt =>
-                    opt.setName('airline')
-                        .setDescription('Filter by airline name')
-                        .setRequired(false)
-                )
                 .addStringOption(opt =>
                     opt.setName('aircraft')
                         .setDescription('Filter by aircraft type e.g. 737-800')
@@ -86,13 +81,55 @@ module.exports = {
             }
 
             if (sub === 'flights') {
-                const airline = interaction.options.getString('airline') || null;
                 const aircraft = interaction.options.getString('aircraft') || null;
                 const limit = interaction.options.getInteger('limit') ?? 10;
                 const year = interaction.options.getInteger('year') || null;
 
+                // Fetch airline list for the dropdown
+                let airlineNames = [];
+                try {
+                    const airlinesRes = await axios.get(`${API}/airlines`);
+                    airlineNames = airlinesRes.data.map(a => a.airline ?? a.name ?? a).filter(Boolean);
+                } catch {
+                    // Fallback: extract unique airlines from a sample of flights
+                    try {
+                        const sample = await axios.get(`${API}/flights`, { params: { limit: 100 } });
+                        airlineNames = [...new Set(sample.data.map(f => f.airline?.split(' (')[0]).filter(Boolean))];
+                    } catch { /* proceed without dropdown */ }
+                }
+
+                let selectedAirline = null;
+
+                if (airlineNames.length > 0) {
+                    const options = [
+                        { label: 'All Airlines', value: '__all__' },
+                        ...airlineNames.slice(0, 24).map(name => ({ label: name, value: name })),
+                    ];
+
+                    const selectRow = new ActionRowBuilder().addComponents(
+                        new StringSelectMenuBuilder()
+                            .setCustomId('airline_select')
+                            .setPlaceholder('Select an airline…')
+                            .addOptions(options)
+                    );
+
+                    const selectMsg = await interaction.editReply({ content: 'Select an airline to filter by:', components: [selectRow] });
+
+                    try {
+                        const selection = await selectMsg.awaitMessageComponent({
+                            filter: i => i.user.id === interaction.user.id,
+                            componentType: ComponentType.StringSelect,
+                            time: 30_000,
+                        });
+                        if (selection.values[0] !== '__all__') selectedAirline = selection.values[0];
+                        await selection.deferUpdate();
+                    } catch {
+                        // Timed out — proceed without airline filter
+                    }
+                }
+
                 const params = { limit };
-                if (airline) params.airline = airline;
+                if (selectedAirline) params.airline = selectedAirline;
                 if (aircraft) params.aircraft = aircraft;
                 if (year) params.year = year;
 
@@ -100,7 +137,7 @@ module.exports = {
                 const flights = res.data;
 
                 if (!flights.length) {
-                    return interaction.editReply('No flights found matching those filters.');
+                    return interaction.editReply({ content: 'No flights found matching those filters.', components: [] });
                 }
 
                 const lines = flights.map(f => {
@@ -111,7 +148,7 @@ module.exports = {
                 });
 
                 const filterDesc = [
-                    airline && `airline: *${airline}*`,
+                    selectedAirline && `airline: *${selectedAirline}*`,
                     aircraft && `aircraft: *${aircraft}*`,
                     year && `year: *${year}*`,
                 ].filter(Boolean).join(', ');
@@ -128,7 +165,7 @@ module.exports = {
                         .setFooter({ text: `Page ${page + 1}/${totalPages} · ${flights.length} flights` });
                 };
 
-                const buildRow = (page) => new ActionRowBuilder().addComponents(
+                const buildNavRow = (page) => new ActionRowBuilder().addComponents(
                     new ButtonBuilder()
                         .setCustomId('prev')
                         .setLabel('◀ Prev')
@@ -142,11 +179,11 @@ module.exports = {
                 );
 
                 if (totalPages === 1) {
-                    return interaction.editReply({ embeds: [buildEmbed(0)] });
+                    return interaction.editReply({ embeds: [buildEmbed(0)], components: [] });
                 }
 
                 let page = 0;
-                const msg = await interaction.editReply({ embeds: [buildEmbed(0)], components: [buildRow(0)] });
+                const msg = await interaction.editReply({ embeds: [buildEmbed(0)], components: [buildNavRow(0)], content: null });
 
                 const collector = msg.createMessageComponentCollector({
                     componentType: ComponentType.Button,
@@ -157,7 +194,7 @@ module.exports = {
                 collector.on('collect', async btn => {
                     if (btn.customId === 'prev') page--;
                     if (btn.customId === 'next') page++;
-                    await btn.update({ embeds: [buildEmbed(page)], components: [buildRow(page)] });
+                    await btn.update({ embeds: [buildEmbed(page)], components: [buildNavRow(page)] });
                 });
 
                 collector.on('end', () => {
