@@ -124,8 +124,8 @@ module.exports = {
 
             if (sub === 'years') {
                 const year = interaction.options.getInteger('year');
-                const res = await axios.get(`${API}/flights`, { params: { limit: 1000, year } });
-                const flights = res.data;
+                const res = await axios.get(`${API}/flights`, { params: { limit: 1000 } });
+                const flights = res.data.filter(f => f.date?.startsWith(`${year}`));
                 if (!flights.length) return interaction.editReply(`No flights found for ${year}.`);
                 return paginate(interaction, flights.map(formatLine), `✈️ Flights in ${year}`);
             }
