@@ -25,6 +25,20 @@ module.exports = {
                         .setDescription('Filter by aircraft type e.g. 737-800')
                         .setRequired(false)
                 )
+                .addIntegerOption(opt =>
+                    opt.setName('limit')
+                        .setDescription('Number of flights to show (1-25, default 5)')
+                        .setRequired(false)
+                        .setMinValue(1)
+                        .setMaxValue(25)
+                )
+                .addIntegerOption(opt =>
+                    opt.setName('year')
+                        .setDescription('Filter flights by year e.g. 2024')
+                        .setRequired(false)
+                        .setMinValue(1900)
+                        .setMaxValue(2100)
+                )
         )
         .addSubcommand(sub =>
             sub.setName('registration')
@@ -74,10 +88,13 @@ module.exports = {
             if (sub === 'flights') {
                 const airline = interaction.options.getString('airline') || null;
                 const aircraft = interaction.options.getString('aircraft') || null;
+                const limit = interaction.options.getInteger('limit') ?? 5;
+                const year = interaction.options.getInteger('year') || null;
 
-                const params = { limit: 5 };
+                const params = { limit };
                 if (airline) params.airline = airline;
                 if (aircraft) params.aircraft = aircraft;
+                if (year) params.year = year;
 
                 const res = await axios.get(`${API}/flights`, { params });
                 const flights = res.data;
@@ -96,13 +113,14 @@ module.exports = {
                 const filterDesc = [
                     airline && `airline: *${airline}*`,
                     aircraft && `aircraft: *${aircraft}*`,
+                    year && `year: *${year}*`,
                 ].filter(Boolean).join(', ');
 
                 const embed = new EmbedBuilder()
                     .setTitle(`✈️ Recent Flights${filterDesc ? ` — ${filterDesc}` : ''}`)
                     .setColor(0x00aaff)
                     .setDescription(lines.join('\n'))
-                    .setFooter({ text: 'Showing up to 5 most recent' });
+                    .setFooter({ text: `Showing up to ${limit} most recent` });
 
                 return interaction.editReply({ embeds: [embed] });
             }
