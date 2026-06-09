@@ -38,11 +38,6 @@ module.exports = {
         .addSubcommand(sub =>
             sub.setName('registration')
                 .setDescription('Look up an aircraft registration')
-                .addStringOption(opt =>
-                    opt.setName('reg')
-                        .setDescription('Registration e.g. N8670A')
-                        .setRequired(true)
-                )
         ),
 
     async execute(interaction) {
@@ -205,12 +200,64 @@ module.exports = {
             }
 
             if (sub === 'registration') {
-                const reg = interaction.options.getString('reg').trim().toUpperCase();
+                // Fetch registrations list for the dropdown
+                let registrations = [];
+                try {
+                    const regsRes = await axios.get(`${API}/registrations`);
+                    registrations = regsRes.data.map(r => ({
+                        reg: (r.registration ?? r.reg ?? r).toString().toUpperCase(),
+                        label: r.aircraft ?? r.model ?? null,
+                    }));
+                } catch {
+                    // Fallback: extract unique registrations from a flights sample
+                    try {
+                        const sample = await axios.get(`${API}/flights`, { params: { limit: 100 } });
+                        const seen = new Set();
+                        registrations = sample.data
+                            .filter(f => f.registration && !seen.has(f.registration) && seen.add(f.registration))
+                            .map(f => ({ reg: f.registration.toUpperCase(), label: f.aircraft ?? null }));
+                    } catch { /* proceed without dropdown */ }
+                }
+
+                if (!registrations.length) {
+                    return interaction.editReply({ content: 'Could not load registrations list.', components: [] });
+                }
+
+                const selectRow = new ActionRowBuilder().addComponents(
+                    new StringSelectMenuBuilder()
+                        .setCustomId('reg_select')
+                        .setPlaceholder('Select a registration…')
+                        .addOptions(
+                            registrations.slice(0, 25).map(r => ({
+                                label: r.label ? `${r.reg} — ${r.label}` : r.reg,
+                                value: r.reg,
+                            }))
+                        )
+                );
+
+                const selectMsg = await interaction.editReply({
+                    content: 'Select an aircraft registration:',
+                    components: [selectRow],
+                });
+
+                let reg;
+                try {
+                    const selection = await selectMsg.awaitMessageComponent({
+                        filter: i => i.user.id === interaction.user.id,
+                        componentType: ComponentType.StringSelect,
+                        time: 30_000,
+                    });
+                    reg = selection.values[0];
+                    await selection.deferUpdate();
+                } catch {
+                    return interaction.editReply({ content: 'Timed out — no registration selected.', components: [] });
+                }
+
                 const res = await axios.get(`${API}/registrations/${reg}`);
                 const { meta, flights } = res.data;
 
                 if (!meta && !flights.length) {
-                    return interaction.editReply(`No data found for registration **${reg}**.`);
+                    return interaction.editReply({ content: `No data found for registration **${reg}**.`, components: [] });
                 }
 
                 const fields = [];
@@ -241,11 +288,9 @@ module.exports = {
                     .setColor(0x00aaff)
                     .addFields(...fields);
 
-                if (meta?.photo_thumbnail_url) {
-                    embed.setThumbnail(meta.photo_thumbnail_url);
-                }
+                if (meta?.photo_thumbnail_url) embed.setThumbnail(meta.photo_thumbnail_url);
 
-                return interaction.editReply({ embeds: [embed] });
+                return interaction.editReply({ embeds: [embed], components: [] });
             }
 
         } catch (err) {
