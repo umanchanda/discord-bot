@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType } = require('discord.js');
 const axios = require('axios');
 
 const API = process.env.FLIGHT_DIARY_API_URL || 'https://flight-data-26kb.onrender.com';
@@ -27,10 +27,10 @@ module.exports = {
                 )
                 .addIntegerOption(opt =>
                     opt.setName('limit')
-                        .setDescription('Number of flights to show (1-25, default 5)')
+                        .setDescription('Number of flights to show (1-100, default 10)')
                         .setRequired(false)
                         .setMinValue(1)
-                        .setMaxValue(25)
+                        .setMaxValue(100)
                 )
                 .addIntegerOption(opt =>
                     opt.setName('year')
@@ -88,7 +88,7 @@ module.exports = {
             if (sub === 'flights') {
                 const airline = interaction.options.getString('airline') || null;
                 const aircraft = interaction.options.getString('aircraft') || null;
-                const limit = interaction.options.getInteger('limit') ?? 5;
+                const limit = interaction.options.getInteger('limit') ?? 10;
                 const year = interaction.options.getInteger('year') || null;
 
                 const params = { limit };
@@ -116,13 +116,55 @@ module.exports = {
                     year && `year: *${year}*`,
                 ].filter(Boolean).join(', ');
 
-                const embed = new EmbedBuilder()
-                    .setTitle(`✈️ Recent Flights${filterDesc ? ` — ${filterDesc}` : ''}`)
-                    .setColor(0x00aaff)
-                    .setDescription(lines.join('\n'))
-                    .setFooter({ text: `Showing up to ${limit} most recent` });
+                const PAGE_SIZE = 10;
+                const totalPages = Math.ceil(lines.length / PAGE_SIZE);
 
-                return interaction.editReply({ embeds: [embed] });
+                const buildEmbed = (page) => {
+                    const slice = lines.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+                    return new EmbedBuilder()
+                        .setTitle(`✈️ Recent Flights${filterDesc ? ` — ${filterDesc}` : ''}`)
+                        .setColor(0x00aaff)
+                        .setDescription(slice.join('\n'))
+                        .setFooter({ text: `Page ${page + 1}/${totalPages} · ${flights.length} flights` });
+                };
+
+                const buildRow = (page) => new ActionRowBuilder().addComponents(
+                    new ButtonBuilder()
+                        .setCustomId('prev')
+                        .setLabel('◀ Prev')
+                        .setStyle(ButtonStyle.Secondary)
+                        .setDisabled(page === 0),
+                    new ButtonBuilder()
+                        .setCustomId('next')
+                        .setLabel('Next ▶')
+                        .setStyle(ButtonStyle.Secondary)
+                        .setDisabled(page === totalPages - 1),
+                );
+
+                if (totalPages === 1) {
+                    return interaction.editReply({ embeds: [buildEmbed(0)] });
+                }
+
+                let page = 0;
+                const msg = await interaction.editReply({ embeds: [buildEmbed(0)], components: [buildRow(0)] });
+
+                const collector = msg.createMessageComponentCollector({
+                    componentType: ComponentType.Button,
+                    filter: i => i.user.id === interaction.user.id,
+                    idle: 60_000,
+                });
+
+                collector.on('collect', async btn => {
+                    if (btn.customId === 'prev') page--;
+                    if (btn.customId === 'next') page++;
+                    await btn.update({ embeds: [buildEmbed(page)], components: [buildRow(page)] });
+                });
+
+                collector.on('end', () => {
+                    interaction.editReply({ components: [] }).catch(() => {});
+                });
+
+                return;
             }
 
             if (sub === 'registration') {
