@@ -78,6 +78,13 @@ client.on('interactionCreate', async interaction => {
 // 	}
 // });
 
+client.on('messageCreate', message => {
+	if (message.author?.bot) return;
+	if (message.content?.toLowerCase().startsWith('sudo')) {
+		message.channel.send(`${message.author.username} is not in the sudoers file. This incident will be reported.`).catch(console.error);
+	}
+});
+
 const token = process.env.TOKEN;
 if (!token) {
 	console.error('Missing TOKEN in environment. Create a .env file from .env.example');
