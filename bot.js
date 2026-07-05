@@ -7,7 +7,6 @@ require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const { Client, Collection, GatewayIntentBits } = require('discord.js');
-const { registerCrons } = require('./crons');
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });
 
@@ -32,8 +31,6 @@ if (fs.existsSync(commandsPath)) {
 }
 console.log(`Loaded commands: ${[...client.commands.keys()].join(', ')}`);
 
-const uman230 = process.env.USER_ID;
-
 let _readyHandled = false;
 const _handleReady = () => {
 	if (_readyHandled) return;
@@ -41,8 +38,6 @@ const _handleReady = () => {
 	console.log(`Logged in as ${client.user.tag}`);
 };
 client.once('clientReady', _handleReady);
-
-registerCrons(client, uman230);
 
 client.on('interactionCreate', async interaction => {
 	if (!interaction.isChatInputCommand()) return;
