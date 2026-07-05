@@ -8,7 +8,7 @@ const fs = require('fs');
 const path = require('path');
 const { Client, Collection, GatewayIntentBits } = require('discord.js');
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
 client.commands = new Collection();
 const commandsPath = path.join(__dirname, 'commands');
@@ -72,6 +72,13 @@ client.on('interactionCreate', async interaction => {
 // 		message.channel.send('SHUT UP <@139835342718107648>.').catch(console.error);
 // 	}
 // });
+
+client.on('messageCreate', message => {
+	if (message.author?.bot) return;
+	if (message.content?.toLowerCase().startsWith('sudo')) {
+		message.channel.send(`${message.author.username} is not in the sudoers file. This incident will be reported.`).catch(console.error);
+	}
+});
 
 const token = process.env.TOKEN;
 if (!token) {
