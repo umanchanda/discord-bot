@@ -19,7 +19,7 @@ function buildEstimateLine(estimate) {
     const aircraft = estimate.aircraft_type || estimate.aircraft_name || 'Unknown aircraft';
     const distance = estimate.distance_nm != null ? `${Math.round(estimate.distance_nm).toLocaleString()} nm` : 'N/A';
     const blockTime = estimate.block_time_min != null ? `${Math.round(estimate.block_time_min)} min` : 'N/A';
-    const totalFuel = formatTonnes(estimate.fuel_kg?.total_kg);
+    const totalFuel = formatTonnes(estimate.fuel_tons?.total_tons);
 
     return `**${aircraft}** - ${totalFuel} (Distance: ${distance}, Block: ${blockTime})`;
 }
@@ -84,8 +84,8 @@ module.exports = {
             }
 
             const sorted = [...estimates].sort((a, b) => {
-                const aTotal = Number(a?.fuel_kg?.total_kg ?? Number.POSITIVE_INFINITY);
-                const bTotal = Number(b?.fuel_kg?.total_kg ?? Number.POSITIVE_INFINITY);
+                const aTotal = Number(a?.fuel_tons?.total_tons ?? Number.POSITIVE_INFINITY);
+                const bTotal = Number(b?.fuel_tons?.total_tons ?? Number.POSITIVE_INFINITY);
                 return aTotal - bTotal;
             });
 
