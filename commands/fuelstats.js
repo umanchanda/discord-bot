@@ -15,11 +15,18 @@ function formatKg(value) {
     return `${Math.round(Number(value)).toLocaleString()} kg`;
 }
 
+function formatKgAndTons(value) {
+    if (value == null || Number.isNaN(Number(value))) return 'N/A';
+    const kg = Number(value);
+    const tonnes = kg / 1000;
+    return `${Math.round(kg).toLocaleString()} kg (${tonnes.toFixed(2)} t)`;
+}
+
 function buildEstimateLine(estimate) {
     const aircraft = estimate.aircraft_type || estimate.aircraft_name || 'Unknown aircraft';
     const distance = estimate.distance_nm != null ? `${Math.round(estimate.distance_nm).toLocaleString()} nm` : 'N/A';
     const blockTime = estimate.block_time_min != null ? `${Math.round(estimate.block_time_min)} min` : 'N/A';
-    const totalFuel = formatKg(estimate.fuel_kg?.total_kg);
+    const totalFuel = formatKgAndTons(estimate.fuel_kg?.total_kg);
 
     return `**${aircraft}** - ${totalFuel} (Distance: ${distance}, Block: ${blockTime})`;
 }
