@@ -15,11 +15,23 @@ function formatTonnes(value) {
     return `${Number(value).toFixed(2)} t`;
 }
 
+function getTotalTons(estimate) {
+    const totalTons = estimate?.fuel_tons?.total_tons;
+    if (totalTons != null && !Number.isNaN(Number(totalTons))) return Number(totalTons);
+
+    const totalKg = estimate?.fuel_tons?.total_kg;
+    if (totalKg != null && !Number.isNaN(Number(totalKg))) return Number(totalKg) / 1000;
+
+    return null;
+}
+
 function buildEstimateLine(estimate) {
-    const aircraft = estimate.aircraft_type || estimate.aircraft_name || 'Unknown aircraft';
+    const aircraftType = estimate.aircraft_type || null;
+    const aircraftName = estimate.aircraft_name || null;
+    const aircraft = aircraftType && aircraftName ? `${aircraftType} (${aircraftName})` : (aircraftType || aircraftName || 'Unknown aircraft');
     const distance = estimate.distance_nm != null ? `${Math.round(estimate.distance_nm).toLocaleString()} nm` : 'N/A';
     const blockTime = estimate.block_time_min != null ? `${Math.round(estimate.block_time_min)} min` : 'N/A';
-    const totalFuel = formatTonnes(estimate.fuel_tons?.total_tons);
+    const totalFuel = formatTonnes(getTotalTons(estimate));
 
     return `**${aircraft}** - ${totalFuel} (Distance: ${distance}, Block: ${blockTime})`;
 }
@@ -84,8 +96,8 @@ module.exports = {
             }
 
             const sorted = [...estimates].sort((a, b) => {
-                const aTotal = Number(a?.fuel_tons?.total_tons ?? Number.POSITIVE_INFINITY);
-                const bTotal = Number(b?.fuel_tons?.total_tons ?? Number.POSITIVE_INFINITY);
+                const aTotal = getTotalTons(a) ?? Number.POSITIVE_INFINITY;
+                const bTotal = getTotalTons(b) ?? Number.POSITIVE_INFINITY;
                 return aTotal - bTotal;
             });
 
