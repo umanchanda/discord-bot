@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
-const { EmbedBuilder } = require('discord.js');
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
 const axios = require('axios');
 
 const API_URL = 'https://movie-db-ekse.onrender.com/api/movies';
@@ -29,6 +29,49 @@ function buildEmbed(movies, page, totalPages, totalMovies) {
         .setFooter({ text: `Page ${page + 1}/${totalPages} · ${totalMovies} total movies` });
 }
 
+function buildControls(page, totalPages) {
+    const previousButton = new ButtonBuilder()
+        .setCustomId('movies_previous')
+        .setLabel('Previous')
+        .setEmoji('⬅️')
+        .setStyle(ButtonStyle.Secondary)
+        .setDisabled(page === 0);
+
+    const nextButton = new ButtonBuilder()
+        .setCustomId('movies_next')
+        .setLabel('Next')
+        .setEmoji('➡️')
+        .setStyle(ButtonStyle.Secondary)
+        .setDisabled(page >= totalPages - 1);
+
+    return new ActionRowBuilder().addComponents(previousButton, nextButton);
+}
+
+function buildDisabledControls(page, totalPages) {
+    const previousButton = new ButtonBuilder()
+        .setCustomId('movies_previous')
+        .setLabel('Previous')
+        .setEmoji('⬅️')
+        .setStyle(ButtonStyle.Secondary)
+        .setDisabled(true);
+
+    const nextButton = new ButtonBuilder()
+        .setCustomId('movies_next')
+        .setLabel('Next')
+        .setEmoji('➡️')
+        .setStyle(ButtonStyle.Secondary)
+        .setDisabled(true);
+
+    return new ActionRowBuilder().addComponents(previousButton, nextButton);
+}
+
+function buildMessage(pages, page, totalMovies) {
+    return {
+        embeds: [buildEmbed(pages[page], page, pages.length, totalMovies)],
+        components: [buildControls(page, pages.length)],
+    };
+}
+
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('movies')
@@ -44,14 +87,37 @@ module.exports = {
             }
 
             const pages = chunkArray(data, PAGE_SIZE);
-            const firstEmbed = buildEmbed(pages[0], 0, pages.length, data.length);
 
-            await interaction.editReply({ embeds: [firstEmbed] });
+            await interaction.editReply(buildMessage(pages, 0, data.length));
 
-            for (let page = 1; page < pages.length; page += 1) {
-                const embed = buildEmbed(pages[page], page, pages.length, data.length);
-                await interaction.followUp({ embeds: [embed] });
-            }
+            const reply = await interaction.fetchReply();
+            let page = 0;
+            const collector = reply.createMessageComponentCollector({
+                filter: componentInteraction => componentInteraction.user.id === interaction.user.id,
+                time: 5 * 60 * 1000,
+            });
+
+            collector.on('collect', async componentInteraction => {
+                if (componentInteraction.customId === 'movies_previous') {
+                    page = Math.max(page - 1, 0);
+                } else if (componentInteraction.customId === 'movies_next') {
+                    page = Math.min(page + 1, pages.length - 1);
+                }
+
+                await componentInteraction.update(buildMessage(pages, page, data.length));
+            });
+
+            collector.on('end', async () => {
+                if (!interaction.channel) return;
+                try {
+                    await interaction.editReply({
+                        embeds: [buildEmbed(pages[page], page, pages.length, data.length)],
+                        components: [buildDisabledControls(page, pages.length)],
+                    });
+                } catch (err) {
+                    console.error('movies collector cleanup error:', err);
+                }
+            });
         } catch (err) {
             console.error('movies command error:', err);
             try {
