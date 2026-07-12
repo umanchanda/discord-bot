@@ -15,6 +15,18 @@ function formatTonnes(value) {
     return `${Number(value).toFixed(2)} t`;
 }
 
+function formatBreakdown(fuelTons) {
+    if (!fuelTons || typeof fuelTons !== 'object') return 'N/A';
+
+    return [
+        `Taxi: ${formatTonnes(fuelTons.taxi_tons)}`,
+        `Trip: ${formatTonnes(fuelTons.trip_tons)}`,
+        `Contingency: ${formatTonnes(fuelTons.contingency_tons)}`,
+        `Reserve: ${formatTonnes(fuelTons.reserve_tons)}`,
+        `Total: ${formatTonnes(fuelTons.total_tons)}`,
+    ].join(' | ');
+}
+
 function getTotalTons(estimate) {
     const totalTons = estimate?.fuel_tons?.total_tons;
     if (totalTons != null && !Number.isNaN(Number(totalTons))) return Number(totalTons);
@@ -32,15 +44,28 @@ function buildEstimateLine(estimate) {
     const distance = estimate.distance_nm != null ? `${Math.round(estimate.distance_nm).toLocaleString()} nm` : 'N/A';
     const blockTime = estimate.block_time_min != null ? `${Math.round(estimate.block_time_min)} min` : 'N/A';
     const totalFuel = formatTonnes(getTotalTons(estimate));
+    const breakdown = formatBreakdown(estimate.fuel_tons);
 
-    return `**${aircraft}** - ${totalFuel} (Distance: ${distance}, Block: ${blockTime})`;
+    return `**${aircraft}** - ${totalFuel} (Distance: ${distance}, Block: ${blockTime})\n${breakdown}`;
 }
 
 function buildAssumptionsText(assumptions) {
     if (!assumptions || typeof assumptions !== 'object') return 'N/A';
     const entries = Object.entries(assumptions);
     if (!entries.length) return 'N/A';
-    return entries.map(([k, v]) => `${k}: ${v}`).join(' | ');
+    const labelMap = {
+        routing_factor: 'Routing factor',
+        contingency_pct: 'Contingency pct',
+        payload_kg: 'Payload',
+    };
+
+    return entries.map(([k, v]) => {
+        const label = labelMap[k] || k;
+        if (k === 'payload_kg' && v != null && !Number.isNaN(Number(v))) {
+            return `${label}: ${Number(v).toLocaleString()} kg`;
+        }
+        return `${label}: ${v}`;
+    }).join(' | ');
 }
 
 module.exports = {
