@@ -45,29 +45,20 @@ function buildAssumptionsText(assumptions) {
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('fuel')
-        .setDescription('Fuel planning utilities')
-        .addSubcommand(sub =>
-            sub.setName('stats')
-                .setDescription('Estimate fuel burn by route')
-                .addStringOption(opt =>
-                    opt.setName('origin')
-                        .setDescription('Origin airport code (e.g. JFK or KJFK)')
-                        .setRequired(true)
-                )
-                .addStringOption(opt =>
-                    opt.setName('destination')
-                        .setDescription('Destination airport code (e.g. LAX or KLAX)')
-                        .setRequired(true)
-                )
+        .setName('fuelstats')
+        .setDescription('Estimate fuel burn by route')
+        .addStringOption(opt =>
+            opt.setName('origin')
+                .setDescription('Origin airport code (e.g. JFK or KJFK)')
+                .setRequired(true)
+        )
+        .addStringOption(opt =>
+            opt.setName('destination')
+                .setDescription('Destination airport code (e.g. LAX or KLAX)')
+                .setRequired(true)
         ),
 
     async execute(interaction) {
-        const sub = interaction.options.getSubcommand();
-        if (sub !== 'stats') {
-            return interaction.reply({ content: 'Unknown fuel subcommand.', ephemeral: true });
-        }
-
         await interaction.deferReply();
 
         const origin = normalizeCode(interaction.options.getString('origin'));
