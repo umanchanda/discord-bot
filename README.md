@@ -103,6 +103,10 @@ Got bored and decided to make a discord bot
 
 ### Entertainment
 
+- `/movies`
+  - What it does: Fetches the watched-movies list from the movie database API and displays every movie in chunked embeds.
+  - Example output: One or more embeds listing all watched movies with their release years.
+
 - `/tomato movie:"TITLE"`
   - What it does: Looks up the Rotten Tomatoes Tomatometer and Audience score for a movie.
   - Example output: `🍅 **Inception** (2010): **87%** Tomatometer | **91%** Audience`
