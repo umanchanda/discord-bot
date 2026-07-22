@@ -68,6 +68,47 @@ function buildAssumptionsText(assumptions) {
     }).join(' | ');
 }
 
+function buildEstimateFields(lines, totalCount) {
+    const MAX_FIELD_VALUE_LEN = 1024;
+    if (!Array.isArray(lines) || !lines.length) {
+        return [{ name: `Estimates (${totalCount})`, value: 'N/A', inline: false }];
+    }
+
+    const chunks = [];
+    let current = '';
+
+    for (const rawLine of lines) {
+        const line = String(rawLine || '');
+        if (!line) continue;
+
+        if (line.length > MAX_FIELD_VALUE_LEN) {
+            const truncated = `${line.slice(0, MAX_FIELD_VALUE_LEN - 3)}...`;
+            if (current) {
+                chunks.push(current);
+                current = '';
+            }
+            chunks.push(truncated);
+            continue;
+        }
+
+        const candidate = current ? `${current}\n${line}` : line;
+        if (candidate.length <= MAX_FIELD_VALUE_LEN) {
+            current = candidate;
+        } else {
+            chunks.push(current);
+            current = line;
+        }
+    }
+
+    if (current) chunks.push(current);
+
+    return chunks.map((value, idx) => ({
+        name: idx === 0 ? `Estimates (${totalCount})` : `Estimates (cont. ${idx + 1}/${chunks.length})`,
+        value,
+        inline: false,
+    }));
+}
+
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('fuelstats')
@@ -119,13 +160,14 @@ module.exports = {
 
             const estimateLines = sorted.slice(0, 10).map(buildEstimateLine);
             const assumptionsText = buildAssumptionsText(data.assumptions);
+            const estimateFields = buildEstimateFields(estimateLines, sorted.length);
 
             const embed = new EmbedBuilder()
                 .setTitle(`Fuel Stats: ${data.origin || origin} -> ${data.destination || destination}`)
                 .setColor(0x00aaff)
                 .addFields(
                     { name: 'Assumptions', value: assumptionsText, inline: false },
-                    { name: `Estimates (${sorted.length})`, value: estimateLines.join('\n'), inline: false }
+                    ...estimateFields
                 )
                 .setFooter({
                     text: `routing_factor=${ROUTING_FACTOR} | contingency_pct=${CONTINGENCY_PCT}`,
