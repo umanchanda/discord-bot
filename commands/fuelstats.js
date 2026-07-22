@@ -74,12 +74,12 @@ module.exports = {
         .setDescription('Estimate fuel burn by route')
         .addStringOption(opt =>
             opt.setName('origin')
-                .setDescription('Origin airport code (e.g. JFK or KJFK)')
+                .setDescription('Origin IATA airport code (e.g. JFK)')
                 .setRequired(true)
         )
         .addStringOption(opt =>
             opt.setName('destination')
-                .setDescription('Destination airport code (e.g. LAX or KLAX)')
+                .setDescription('Destination IATA airport code (e.g. LAX)')
                 .setRequired(true)
         ),
 
@@ -89,8 +89,8 @@ module.exports = {
         const origin = normalizeCode(interaction.options.getString('origin'));
         const destination = normalizeCode(interaction.options.getString('destination'));
 
-        if (!/^[A-Z]{3,4}$/.test(origin) || !/^[A-Z]{3,4}$/.test(destination)) {
-            return interaction.editReply('Please provide valid airport codes (3-4 letters).');
+        if (!/^[A-Z]{3}$/.test(origin) || !/^[A-Z]{3}$/.test(destination)) {
+            return interaction.editReply('Please provide valid 3-letter IATA airport codes (for example: ORD, EWR).');
         }
 
         try {
@@ -141,7 +141,22 @@ module.exports = {
 
             return interaction.editReply({ embeds: [embed] });
         } catch (err) {
-            console.error('fuel stats command error:', err?.response?.data || err.message);
+            const status = err?.response?.status;
+            const detail = err?.response?.data?.detail;
+            console.error('fuel stats command error:', status, detail || err.message);
+
+            if (status === 404 && typeof detail === 'string' && detail.includes('Unknown')) {
+                return interaction.editReply(`API could not find one of the airports for **${origin} -> ${destination}**. Please use 3-letter IATA codes (for example: ORD, EWR).`);
+            }
+
+            if (status === 502 && typeof detail === 'string') {
+                return interaction.editReply(`Fuel stats API could not provide data for **${origin} -> ${destination}** right now (${detail}). Please try another route or retry shortly.`);
+            }
+
+            if (err.code === 'ECONNABORTED') {
+                return interaction.editReply('Fuel stats request timed out. Please try again in a moment.');
+            }
+
             return interaction.editReply('Failed to fetch fuel stats. Please try again in a moment.');
         }
     },
