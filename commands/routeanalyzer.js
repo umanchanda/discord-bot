@@ -44,7 +44,7 @@ module.exports = {
         let data;
         try {
             const res = await axios.get(
-                `https://route-analyzer-nfu1.onrender.com/aircraft/${encodeURIComponent(origin)}/${encodeURIComponent(destination)}`,
+                `https://route-analyzer-nfu1.onrender.com/v1/fuel/by-route?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}&routing_factor=1.06&contingency_pct=0.05`,
                 { timeout: 30000 }
             );
             data = res.data;
