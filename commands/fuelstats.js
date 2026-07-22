@@ -5,6 +5,16 @@ const axios = require('axios');
 const API_URL = 'https://flight-fuel-stats.onrender.com/v1/fuel/by-route';
 const ROUTING_FACTOR = 1.06;
 const CONTINGENCY_PCT = 0.05;
+const REQUEST_TIMEOUT_MS = 15000;
+const MAX_RETRIES = 2;
+
+const RETRYABLE_STATUS = new Set([429, 502, 503, 504]);
+const RETRYABLE_ERROR_CODES = new Set([
+    'ECONNABORTED',
+    'ECONNRESET',
+    'ETIMEDOUT',
+    'EAI_AGAIN',
+]);
 
 function normalizeCode(code) {
     return code.trim().toUpperCase();
@@ -66,6 +76,42 @@ function buildAssumptionsText(assumptions) {
         }
         return `${label}: ${v}`;
     }).join(' | ');
+}
+
+function wait(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function isRetryableRequestError(err) {
+    const status = err?.response?.status;
+    if (status && RETRYABLE_STATUS.has(status)) return true;
+
+    return RETRYABLE_ERROR_CODES.has(err?.code);
+}
+
+async function fetchFuelStats(origin, destination) {
+    let attempt = 0;
+
+    while (true) {
+        try {
+            return await axios.get(API_URL, {
+                params: {
+                    origin,
+                    destination,
+                    routing_factor: ROUTING_FACTOR,
+                    contingency_pct: CONTINGENCY_PCT,
+                },
+                timeout: REQUEST_TIMEOUT_MS,
+            });
+        } catch (err) {
+            if (!isRetryableRequestError(err) || attempt >= MAX_RETRIES) {
+                throw err;
+            }
+
+            attempt += 1;
+            await wait(300 * attempt);
+        }
+    }
 }
 
 function buildEstimateFields(lines, totalCount) {
@@ -135,15 +181,7 @@ module.exports = {
         }
 
         try {
-            const response = await axios.get(API_URL, {
-                params: {
-                    origin,
-                    destination,
-                    routing_factor: ROUTING_FACTOR,
-                    contingency_pct: CONTINGENCY_PCT,
-                },
-                timeout: 15000,
-            });
+            const response = await fetchFuelStats(origin, destination);
 
             const data = response.data || {};
             const estimates = Array.isArray(data.estimates) ? data.estimates : [];
