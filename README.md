@@ -88,7 +88,7 @@ Got bored and decided to make a discord bot
   - Output: Registration dropdown followed by an embed with aircraft metadata, your flight count on that aircraft, and last-flown route details when available.
 
 - `/routeanalyzer origin:ORIGIN destination:DESTINATION`
-  - Output: Rich embed showing route distance, jet fuel price, aircraft list, estimated fuel use and cost per aircraft, route notes, and pricing notes. If no route exists, the bot replies with plain text instead.
+  - Output: Rich embed showing route distance, jet fuel price, aircraft list, estimated fuel use, estimated fuel cost, estimated seats, estimated fuel cost per seat, route notes, and pricing notes. If no route exists, the bot replies with plain text instead.
 
 ### Entertainment
 

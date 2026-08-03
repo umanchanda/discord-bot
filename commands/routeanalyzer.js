@@ -23,6 +23,12 @@ function formatAircraft(ac) {
     if (ac.estimated_fuel_cost_usd != null) {
         lines.push(`Estimated fuel cost: $${Number(ac.estimated_fuel_cost_usd).toLocaleString(undefined, { maximumFractionDigits: 0 })}`);
     }
+    if (ac.estimated_seat_count != null) {
+        lines.push(`Estimated seats: ${Math.round(ac.estimated_seat_count).toLocaleString()}`);
+    }
+    if (ac.estimated_fuel_cost_per_seat_usd != null) {
+        lines.push(`Estimated fuel cost per seat: $${Number(ac.estimated_fuel_cost_per_seat_usd).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+    }
     if (ac.notes) lines.push(`_${ac.notes}_`);
     return lines.join('\n');
 }
