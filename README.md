@@ -7,115 +7,101 @@ Got bored and decided to make a discord bot
 ### Fun / Utility
 
 - `/ping`
-  - What it does: Replies immediately with `Pong!`.
-  - Example output: `Pong!`
+  - Output: Plain text `Pong!`.
 
 - `/coin`
-  - What it does: Flips a coin and returns either `heads` or `tails`.
-  - Example output: `heads`
+  - Output: Plain text `heads` or `tails`.
 
 - `/dice [sides]`
-  - Usage: `/dice` or `/dice sides:10`
-  - What it does: Rolls a die (default 6 sides). Optional `sides` integer between 1 and 50.
-  - Example output: `4`
+  - Output: Plain text roll result. `sides` is optional and defaults to 6.
 
 - `/epoch`
-  - What it does: Returns the current epoch timestamp in seconds.
-  - Example output: `1700000000`
+  - Output: Plain text Unix epoch time in seconds.
 
 - `/emojify text:"TEXT"`
-  - What it does: Converts letters and digits into regional indicator and number emojis.
-  - Example output: `:regional_indicator_h: :regional_indicator_e: ...`
+  - Output: Plain text version of the input converted into emoji characters.
 
 - `/insult`
-  - What it does: Fetches a random insult from an external API and returns the text.
-  - Example output: `You're a [insult text]`
+  - Output: Plain text random insult from the external API.
 
 - `/putin`
-  - What it does: Replies with a fixed YouTube link.
-  - Example output: `https://youtu.be/noQXojwExRA`
+  - Output: Plain text YouTube link.
 
 - `/dudewtf`
-  - What it does: Replies with a YouTube link.
+  - Output: Plain text YouTube link.
 
 - `/trivia [questions]`
-  - Usage: `/trivia` or `/trivia questions:5`
-  - What it does: Runs an interactive sports trivia quiz (multiple choice, button answers) from the Open Trivia DB. Optional `questions` integer between 1 and 20 (default 1). Reports a running and final score.
-  - Example output: Buttoned question rounds ending in `🏆 Final Score: **3/5**`.
+  - Output: Interactive trivia quiz with button answers, running score updates, and a final score message.
 
 ### Memes
 
 - `/boi top:"TOP" bottom:"BOTTOM"`
-  - What it does: Generates a custom memegen image and replies with a direct image URL.
+  - Output: Plain text image URL for a custom memegen image.
 
 - `/facepalm top:"TOP" bottom:"BOTTOM"`
-  - What it does: Generates a Facepalm meme image URL and replies with it.
+  - Output: Plain text image URL for a Facepalm meme.
 
 - `/headout [top] [bottom]`
-  - What it does: Generates a custom meme URL using a preset background image.
+  - Output: Plain text image URL for a preset meme template.
 
 - `/mock top:"TOP" bottom:"BOTTOM"`
-  - What it does: Generates a SpongeBob mock meme image URL and replies with it.
+  - Output: Plain text image URL for a SpongeBob mock meme.
 
 ### Market Data
 
 - `/price asset:ASSET`
-  - What it does: Fetches the latest price for a selected asset via Yahoo Finance. Pick from a dropdown of supported assets: WTI Crude Oil (CL=F), Brent Crude Oil (BZ=F), Bitcoin (BTC-USD), S&P 500 (^GSPC), NASDAQ (^IXIC), TQQQ, SSO, Google (GOOGL), and NVIDIA (NVDA). Price, change, and percent change are formatted per asset type.
-  - Example output: `WTI Crude Oil (CL=F): **$78.45/barrel** (+1.23, +1.59%)` or `Bitcoin Price: **$62,450.00** (+1234.56, +2.01%)`
+  - Output: Plain text latest quote for the selected asset, with price, change, and percent change formatted per asset type.
 
 - `/gas`
-  - What it does: Scrapes the AAA website for the current national average gas price.
-  - Example output: `AAA National Average Gas Price: **$3.45/gallon**`
+  - Output: Plain text current AAA national average gas price.
 
 - `/feargreed`
-  - What it does: Fetches the current CNN Fear & Greed Index via RapidAPI. Requires `RAPIDAPI_KEY`.
-  - Example output: `CNN Fear & Greed Index: **72/100** — **Greed**`
+  - Output: Plain text CNN Fear & Greed Index value and label.
 
-### Sports
+### Sports And Travel
 
 - `/bball year:YYYY month:MM day:DD`
-  - What it does: Returns a link to NBA scores for a specific date from the NBA API.
-  - Example output: `https://uman230-nba-api-2a9531748263.herokuapp.com/scores/2024/04/01`
+  - Output: Plain text NBA scores URL for the selected date.
 
 - `/f1 year:YYYY`
-  - What it does: Fetches the F1 race schedule for a given season via the Jolpi/Ergast API. Presents a dropdown to select a race and then shows a top-10 results embed with podium, fastest lap, and pole position.
-  - Example output: Embed with podium, top 10, fastest lap, and pole for the selected race.
+  - Output: Interactive race picker followed by an embed with podium, top 10, fastest lap, and pole position.
 
 - `/soccerstats league:LEAGUE year:YYYY month:MM day:DD`
-  - What it does: Looks up soccer matches for a date in a chosen league (Premier League, La Liga, Bundesliga, Ligue 1, or MLS) via the ESPN API. Presents a dropdown to select a match and shows an embed with score, match stats (possession, shots, corners, fouls, cards), goals, and venue.
-  - Example output: Embed with the final score, stats breakdown, and goal timeline for the selected match.
+  - Output: Interactive match picker followed by an embed with score, match stats, goals, and venue.
 
 - `/flight callsign:"CALLSIGN"`
-  - What it does: Tracks a live flight by callsign via the ADS-B Exchange RapidAPI. Returns an embed with position, altitude, ground speed, heading, squawk, and ICAO hex. Requires `RAPIDAPI_KEY`.
-  - Example output: Embed showing `UAL123` at 35,000 ft, 480 kts, heading 270° W.
+  - Output: Rich embed with live tracking details such as position, altitude, ground speed, heading, squawk, and ICAO hex.
 
 - `/diary stats`
-  - What it does: Shows overall personal flight-diary stats (total flights, hours flown, unique airlines/airports, top aircraft and airports) via the flight-data API.
-  - Example output: Embed with totals and top-3 aircraft/airports.
+  - Output: Rich embed with overall flight-diary stats, including totals, hours, unique airlines and airports, and top aircraft and airports.
 
 - `/diary flights [airline] [aircraft]`
-  - What it does: Lists the most recent flights, optionally filtered by airline name and/or aircraft type.
-  - Example output: Embed listing up to 5 recent flights with date, flight number, route, duration, and airline.
+  - Output: Paginated embed listing recent flights, optionally filtered by airline or aircraft.
 
-- `/diary registration reg:"REG"`
-  - What it does: Looks up an aircraft registration (e.g. `N8670A`), showing manufacturer, model, operator, country, Mode-S, and how many times you've flown on it.
-  - Example output: Embed with aircraft details and your last flight on it.
+- `/diary years year:YYYY`
+  - Output: Paginated embed filtered to a selected year.
+
+- `/diary airlines`
+  - Output: Airline dropdown followed by a paginated embed filtered to the selected airline.
+
+- `/diary registration`
+  - Output: Registration dropdown followed by an embed with aircraft metadata, your flight count on that aircraft, and last-flown route details when available.
+
+- `/routeanalyzer origin:ORIGIN destination:DESTINATION`
+  - Output: Rich embed showing route distance, jet fuel price, aircraft list, estimated fuel use and cost per aircraft, route notes, and pricing notes. If no route exists, the bot replies with plain text instead.
 
 ### Entertainment
 
 - `/movies`
-  - What it does: Fetches the watched-movies list from the movie database API and displays every movie in chunked embeds.
-  - Example output: One or more embeds listing all watched movies with their release years.
+  - Output: Paginated embeds listing the watched-movies catalog with release years.
 
 - `/tomato movie:"TITLE"`
-  - What it does: Looks up the Rotten Tomatoes Tomatometer and Audience score for a movie.
-  - Example output: `🍅 **Inception** (2010): **87%** Tomatometer | **91%** Audience`
+  - Output: Plain text Rotten Tomatoes Tomatometer and Audience score, with the movie URL when available.
 
 ### Other
 
 - `/weather zip:XXXXX`
-  - What it does: Looks up current weather for a US ZIP code using `WEATHER_API_KEY`.
-  - Example output: `The temperature is 72.3°F — location: Beverly Hills`
+  - Output: Plain text current weather for a US ZIP code.
 
 ## Quick Start
 
