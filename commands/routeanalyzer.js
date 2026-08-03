@@ -17,6 +17,12 @@ function formatAircraft(ac) {
     if (ac.category) lines.push(`Category: ${ac.category}`);
     if (ac.era) lines.push(`Era: ${ac.era}`);
     if (ac.airlines && ac.airlines.length) lines.push(`Airlines: ${ac.airlines.join(', ')}`);
+    if (ac.estimated_fuel_liters != null) {
+        lines.push(`Estimated fuel: ${Math.round(ac.estimated_fuel_liters).toLocaleString()} L`);
+    }
+    if (ac.estimated_fuel_cost_usd != null) {
+        lines.push(`Estimated fuel cost: $${Number(ac.estimated_fuel_cost_usd).toLocaleString(undefined, { maximumFractionDigits: 0 })}`);
+    }
     if (ac.notes) lines.push(`_${ac.notes}_`);
     return lines.join('\n');
 }
@@ -77,6 +83,14 @@ module.exports = {
             });
         }
 
+        if (data.jetFuelPriceUsdPerLiter != null) {
+            embed.addFields({
+                name: '⛽ Jet fuel price',
+                value: `$${Number(data.jetFuelPriceUsdPerLiter).toFixed(2)} / L`,
+                inline: true,
+            });
+        }
+
         const aircraft = Array.isArray(data.aircraft) ? data.aircraft : [];
         if (aircraft.length) {
             // Discord embed field values cap at 1024 chars; split across fields if needed.
@@ -106,6 +120,10 @@ module.exports = {
 
         if (data.routeNotes) {
             embed.setDescription(data.routeNotes);
+        }
+
+        if (data.pricingNotes) {
+            embed.addFields({ name: '💡 Pricing notes', value: data.pricingNotes });
         }
 
         return interaction.editReply({ embeds: [embed] });
