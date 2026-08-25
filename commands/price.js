@@ -2,71 +2,47 @@ const { SlashCommandBuilder } = require('@discordjs/builders');
 const YahooFinance = require('yahoo-finance2').default;
 const yahooFinance = new YahooFinance();
 
-// Each asset maps a /price choice to a Yahoo Finance symbol plus its display formatting.
-//   dollar:      prefix the price with `$` (default true; false for index points)
-//   suffix:      appended after the price, e.g. `/barrel`
-//   comma:       group the price with thousands separators
-//   commaChange: group the change value too (indices report large point moves)
-const ASSETS = {
-    wti:    { symbol: 'CL=F',    label: 'WTI Crude Oil (CL=F)',   name: 'WTI',      suffix: '/barrel' },
-    brent:  { symbol: 'BZ=F',    label: 'Brent Crude Oil (BZ=F)', name: 'Brent',    suffix: '/barrel' },
-    btc:    { symbol: 'BTC-USD', label: 'Bitcoin Price',          name: 'Bitcoin',  comma: true },
-    sp500:  { symbol: '^GSPC',   label: 'S&P 500',                name: 'S&P 500',  dollar: false, comma: true, commaChange: true },
-    nasdaq: { symbol: '^IXIC',   label: 'NASDAQ',                 name: 'NASDAQ',   dollar: false, comma: true, commaChange: true },
-    tqqq:   { symbol: 'TQQQ',    label: 'TQQQ',                   name: 'TQQQ' },
-    sso:    { symbol: 'SSO',     label: 'SSO',                    name: 'SSO' },
-    goog:   { symbol: 'GOOGL',   label: 'GOOGL',                  name: 'GOOGL' },
-    nvda:   { symbol: 'NVDA',    label: 'NVIDIA (NVDA)',          name: 'NVIDIA' },
-};
-
-const CHOICES = [
-    { name: 'WTI Crude Oil', value: 'wti' },
-    { name: 'Brent Crude Oil', value: 'brent' },
-    { name: 'Bitcoin', value: 'btc' },
-    { name: 'S&P 500', value: 'sp500' },
-    { name: 'NASDAQ', value: 'nasdaq' },
-    { name: 'TQQQ', value: 'tqqq' },
-    { name: 'SSO', value: 'sso' },
-    { name: 'Google (GOOGL)', value: 'goog' },
-    { name: 'NVIDIA (NVDA)', value: 'nvda' },
-];
-
 const comma2 = n => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const comma4 = n => n.toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+const SIGN_RE = /^[A-Z0-9.\-^=]{1,15}$/;
 
-function formatQuote(asset, quote) {
-    const dollar = asset.dollar === false ? '' : '$';
-    const suffix = asset.suffix ?? '';
-    const price = asset.comma ? comma2(quote.regularMarketPrice) : quote.regularMarketPrice.toFixed(2);
-    const change = asset.commaChange ? comma2(quote.regularMarketChange) : quote.regularMarketChange.toFixed(2);
-    const changePct = quote.regularMarketChangePercent.toFixed(2);
-    const sign = quote.regularMarketChange >= 0 ? '+' : '';
-    return `${asset.label}: **${dollar}${price}${suffix}** (${sign}${change}, ${sign}${changePct}%)`;
+const formatNumber = n => (Math.abs(n) < 1 ? comma4(n) : comma2(n));
+
+function formatQuote(symbol, quote) {
+    const displayName = quote.shortName || quote.longName || symbol;
+    const price = formatNumber(quote.regularMarketPrice);
+    const change = formatNumber(quote.regularMarketChange ?? 0);
+    const changePct = (quote.regularMarketChangePercent ?? 0).toFixed(2);
+    const currency = quote.currency || 'USD';
+    const sign = (quote.regularMarketChange ?? 0) >= 0 ? '+' : '';
+    return `${displayName} (${symbol}): **${price} ${currency}** (${sign}${change}, ${sign}${changePct}%)`;
 }
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('price')
-        .setDescription('Get the latest price for a stock, index, ETF, or commodity')
+        .setDescription('Get the latest price for any stock ticker')
         .addStringOption(opt =>
-            opt.setName('asset')
-                .setDescription('Which asset?')
+            opt.setName('ticker')
+                .setDescription('Stock ticker symbol (e.g. AAPL, TSLA, NVDA)')
                 .setRequired(true)
-                .addChoices(...CHOICES)
         ),
     async execute(interaction) {
         await interaction.deferReply();
-        const key = interaction.options.getString('asset');
-        const asset = ASSETS[key];
-        if (!asset) return interaction.editReply('Unknown asset.');
+        const rawTicker = interaction.options.getString('ticker');
+        const ticker = rawTicker.trim().toUpperCase();
+        if (!SIGN_RE.test(ticker)) {
+            return interaction.editReply('Invalid ticker format. Use letters/numbers and optional `.`, `-`, `^`, `=`.');
+        }
         try {
-            const quote = await yahooFinance.quote(asset.symbol);
+            const quote = await yahooFinance.quote(ticker);
             if (!quote || quote.regularMarketPrice == null) {
-                return interaction.editReply(`No ${asset.name} price data available right now.`);
+                return interaction.editReply(`No price data available right now for ${ticker}.`);
             }
-            return interaction.editReply(formatQuote(asset, quote));
+            return interaction.editReply(formatQuote(ticker, quote));
         } catch (err) {
-            console.error(`price command error (${key}):`, err);
-            try { await interaction.editReply(`Failed to fetch ${asset.name} price.`); } catch (e) {}
+            console.error(`price command error (${ticker}):`, err);
+            try { await interaction.editReply(`Failed to fetch price for ${ticker}.`); } catch (e) {}
         }
     },
 };
