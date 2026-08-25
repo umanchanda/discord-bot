@@ -49,8 +49,8 @@ Got bored and decided to make a discord bot
 
 ### Market Data
 
-- `/price asset:ASSET`
-  - Output: Plain text latest quote for the selected asset, with price, change, and percent change formatted per asset type.
+- `/price ticker:TICKER`
+  - Output: Plain text latest quote for the requested stock ticker, including price, change, and percent change.
 
 - `/gas`
   - Output: Plain text current AAA national average gas price.
