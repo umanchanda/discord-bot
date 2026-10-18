@@ -66,6 +66,9 @@ Got bored and decided to make a discord bot
 - `/f1 year:YYYY`
   - Output: Interactive race picker followed by an embed with podium, top 10, fastest lap, and pole position.
 
+- `/cfb`
+  - Output: Embed with the current AP Top 25 college football rankings, including each team's W-L record, first-place votes, and movement from the previous week.
+
 - `/soccerstats league:LEAGUE year:YYYY month:MM day:DD`
   - Output: Interactive match picker followed by an embed with score, match stats, goals, and venue.
 
