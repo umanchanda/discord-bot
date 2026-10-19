@@ -69,6 +69,9 @@ Got bored and decided to make a discord bot
 - `/cfb`
   - Output: Embed with the current AP Top 25 college football rankings, including each team's W-L record, first-place votes, and movement from the previous week.
 
+- `/leagues`
+  - Output: Paginated embed (20 per page) of the top 100 men's football leagues from Global Football Rankings, with country and rating.
+
 - `/soccerstats league:LEAGUE year:YYYY month:MM day:DD`
   - Output: Interactive match picker followed by an embed with score, match stats, goals, and venue.
 
